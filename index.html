@@ -495,6 +495,8 @@
         /* Horizontal Combination Bars */
         .combinations-list-bars {
             margin-top: 20px;
+            overflow-x: auto; /* Enables horizontal scrolling if needed */
+            padding-bottom: 10px; /* Space for scrollbar */
         }
 
         .combination-bar-item {
@@ -507,6 +509,8 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
             border-left: 4px solid var(--bar-color);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
+            min-width: 600px; /* Ensures minimum width for all content */
+            overflow: visible; /* Prevents content from being hidden */
         }
 
         .combination-bar-item:hover {
@@ -521,6 +525,9 @@
             margin-right: 20px;
             min-width: 200px;
             font-size: 14px;
+            white-space: nowrap; /* Prevents text wrapping */
+            overflow: hidden;
+            text-overflow: ellipsis; /* Shows ... if text is too long */
         }
 
         .combination-bar-fill {
@@ -543,9 +550,10 @@
         .combination-value {
             font-weight: bold;
             color: #0D8BB1;
-            min-width: 100px;
+            min-width: 140px; /* Increased from 100px to 140px */
             text-align: right;
             font-size: 16px;
+            flex-shrink: 0; /* Prevents shrinking */
         }
 
         .confidence {
@@ -1724,17 +1732,17 @@
 
         function renderNetworkDiagram(results) {
             const container = document.getElementById('networkDiagram');
-            container.innerHTML = '<canvas id="networkCanvas" width="1200" height="800" style="border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 1200px;"></canvas>';
+            container.innerHTML = '<canvas id="networkCanvas" width="1400" height="900" style="border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 1400px;"></canvas>';
             
             const canvas = document.getElementById('networkCanvas');
             const ctx = canvas.getContext('2d');
             
             if (!results || !results.combinations) return;
             
-            // Prepare network data - limit to 12 items for better readability
+            // Prepare network data - limit to 10 items for optimal readability
             const nodes = new Map();
             const edges = [];
-            const maxNodes = 12;
+            const maxNodes = 10;
             
             // Create nodes from items with improved spacing
             results.combinations.slice(0, maxNodes).forEach(combo => {
@@ -1744,7 +1752,7 @@
                             id: item,
                             x: 0, // Will be positioned later
                             y: 0,
-                            radius: 45,
+                            radius: 55, // Increased from 45 to 55
                             connections: 0
                         });
                     }
@@ -1763,35 +1771,44 @@
                 }
             });
             
-            // Enhanced scattered layout positioning for better space utilization
+            // Enhanced scattered layout positioning for maximum space utilization
             const nodeArray = Array.from(nodes.values());
             const centerX = canvas.width / 2;
             const centerY = canvas.height / 2;
-            const radius = Math.min(canvas.width, canvas.height) / 2 - 120;
+            const radius = Math.min(canvas.width, canvas.height) / 2 - 120; // Optimized margin
             
-            // Create multiple concentric circles for better distribution
-            const innerRadius = radius * 0.4;
-            const outerRadius = radius * 0.8;
+            // Create wider concentric circles for optimal distribution and link visibility
+            const innerRadius = radius * 0.25; // Reduced inner radius
+            const middleRadius = radius * 0.65; // Increased middle radius
+            const outerRadius = radius * 0.9;   // Maximized outer radius
             
             nodeArray.forEach((node, index) => {
-                if (index < nodeArray.length / 2) {
-                    // Inner circle for half the nodes
-                    const angle = (index / (nodeArray.length / 2)) * 2 * Math.PI;
+                const third = Math.floor(nodeArray.length / 3);
+                
+                if (index < third) {
+                    // Inner circle for first third
+                    const angle = (index / third) * 2 * Math.PI;
                     node.x = centerX + Math.cos(angle) * innerRadius;
                     node.y = centerY + Math.sin(angle) * innerRadius;
+                } else if (index < third * 2) {
+                    // Middle circle for second third
+                    const adjustedIndex = index - third;
+                    const angle = (adjustedIndex / third) * 2 * Math.PI + Math.PI / third; // Offset for better distribution
+                    node.x = centerX + Math.cos(angle) * middleRadius;
+                    node.y = centerY + Math.sin(angle) * middleRadius;
                 } else {
-                    // Outer circle for the other half
-                    const adjustedIndex = index - Math.floor(nodeArray.length / 2);
-                    const outerCount = nodeArray.length - Math.floor(nodeArray.length / 2);
+                    // Outer circle for remaining nodes
+                    const adjustedIndex = index - (third * 2);
+                    const outerCount = nodeArray.length - (third * 2);
                     const angle = (adjustedIndex / outerCount) * 2 * Math.PI + Math.PI / outerCount; // Offset for better distribution
                     node.x = centerX + Math.cos(angle) * outerRadius;
                     node.y = centerY + Math.sin(angle) * outerRadius;
                 }
             });
             
-            // Improved force simulation for better spacing
-            for (let iteration = 0; iteration < 200; iteration++) {
-                // Repulsion between all nodes
+            // Enhanced force simulation for maximum spacing and clarity
+            for (let iteration = 0; iteration < 300; iteration++) {
+                // Much stronger repulsion between all nodes for optimal spacing
                 for (let i = 0; i < nodeArray.length; i++) {
                     for (let j = i + 1; j < nodeArray.length; j++) {
                         const nodeA = nodeArray[i];
@@ -1801,8 +1818,8 @@
                         const dy = nodeB.y - nodeA.y;
                         const distance = Math.sqrt(dx * dx + dy * dy);
                         
-                        if (distance > 0 && distance < 200) {
-                            const repulsion = 8000 / (distance * distance);
+                        if (distance > 0 && distance < 320) { // Much larger minimum distance
+                            const repulsion = 18000 / (distance * distance); // Significantly increased repulsion
                             const fx = (dx / distance) * repulsion;
                             const fy = (dy / distance) * repulsion;
                             
@@ -1814,7 +1831,7 @@
                     }
                 }
                 
-                // Attraction along edges
+                // Softer attraction along edges to maintain connections without clustering
                 edges.forEach(edge => {
                     const source = nodes.get(edge.source);
                     const target = nodes.get(edge.target);
@@ -1824,8 +1841,8 @@
                         const dy = target.y - source.y;
                         const distance = Math.sqrt(dx * dx + dy * dy);
                         
-                        if (distance > 150) {
-                            const attraction = (distance - 180) * 0.015;
+                        if (distance > 250) { // Larger ideal connection distance
+                            const attraction = (distance - 280) * 0.008; // Reduced attraction to prevent clustering
                             const fx = (dx / distance) * attraction;
                             const fy = (dy / distance) * attraction;
                             
@@ -1837,10 +1854,10 @@
                     }
                 });
                 
-                // Keep nodes in bounds with better margins
+                // Keep nodes in bounds with generous margins
                 nodes.forEach(node => {
-                    node.x = Math.max(80, Math.min(canvas.width - 80, node.x));
-                    node.y = Math.max(80, Math.min(canvas.height - 80, node.y));
+                    node.x = Math.max(120, Math.min(canvas.width - 120, node.x));
+                    node.y = Math.max(120, Math.min(canvas.height - 120, node.y));
                 });
             }
             
@@ -1861,16 +1878,16 @@
                     ctx.moveTo(source.x, source.y);
                     ctx.lineTo(target.x, target.y);
                     
-                    // Enhanced color coding based on weight
+                    // Enhanced color coding with better visibility
                     const normalizedWeight = Math.min(edge.weight / 5, 1);
-                    if (normalizedWeight < 0.2) ctx.strokeStyle = '#ff6b6b';
-                    else if (normalizedWeight < 0.4) ctx.strokeStyle = '#ffa726';
-                    else if (normalizedWeight < 0.6) ctx.strokeStyle = '#66bb6a';
-                    else if (normalizedWeight < 0.8) ctx.strokeStyle = '#42a5f5';
-                    else ctx.strokeStyle = '#ab47bc';
+                    if (normalizedWeight < 0.2) ctx.strokeStyle = '#EF5350'; // Enhanced red
+                    else if (normalizedWeight < 0.4) ctx.strokeStyle = '#FF7043'; // Enhanced orange
+                    else if (normalizedWeight < 0.6) ctx.strokeStyle = '#66BB6A'; // Enhanced green
+                    else if (normalizedWeight < 0.8) ctx.strokeStyle = '#42A5F5'; // Enhanced blue
+                    else ctx.strokeStyle = '#AB47BC'; // Enhanced purple
                     
-                    ctx.lineWidth = Math.max(2, edge.weight);
-                    ctx.globalAlpha = 0.8;
+                    ctx.lineWidth = Math.max(3, edge.weight * 1.5); // Thicker lines
+                    ctx.globalAlpha = 0.9; // Slightly less transparent
                     ctx.stroke();
                     ctx.globalAlpha = 1;
                 }
@@ -1888,11 +1905,11 @@
                 ctx.beginPath();
                 ctx.arc(node.x, node.y, node.radius, 0, 2 * Math.PI);
                 
-                // Node color based on connections
+                // Enhanced node colors with better contrast
                 const connectionRatio = Math.min(node.connections / 3, 1);
-                if (connectionRatio < 0.3) ctx.fillStyle = '#42a5f5';
-                else if (connectionRatio < 0.6) ctx.fillStyle = '#0D8BB1';
-                else ctx.fillStyle = '#4A90A4';
+                if (connectionRatio < 0.3) ctx.fillStyle = '#1E88E5'; // Deeper blue
+                else if (connectionRatio < 0.6) ctx.fillStyle = '#0D8BB1'; // Original teal
+                else ctx.fillStyle = '#26A69A'; // Vibrant teal
                 
                 ctx.fill();
                 
@@ -1907,26 +1924,26 @@
                 ctx.lineWidth = 4;
                 ctx.stroke();
                 
-                // Node label with better formatting
+                // Node label with enhanced formatting
                 ctx.fillStyle = '#ffffff';
-                ctx.font = 'bold 11px Arial';
+                ctx.font = 'bold 14px Arial'; // Increased font size
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 
-                // Smart text truncation and wrapping
+                // Smart text truncation and wrapping for larger nodes
                 let text = node.id;
-                if (text.length > 8) {
+                if (text.length > 10) { // Increased character limit
                     const words = text.split(' ');
                     if (words.length > 1) {
-                        text = words[0].substring(0, 6) + '...';
+                        text = words[0].substring(0, 8) + '...';
                     } else {
-                        text = text.substring(0, 8) + '...';
+                        text = text.substring(0, 10) + '...';
                     }
                 }
                 
-                // Text outline for better readability
+                // Enhanced text outline for better readability
                 ctx.strokeStyle = '#0D8BB1';
-                ctx.lineWidth = 3;
+                ctx.lineWidth = 4; // Increased outline thickness
                 ctx.strokeText(text, node.x, node.y);
                 ctx.fillText(text, node.x, node.y);
             });
