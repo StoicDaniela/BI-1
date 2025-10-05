@@ -509,8 +509,9 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
             border-left: 4px solid var(--bar-color);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
-            min-width: 600px; /* Ensures minimum width for all content */
+            min-width: 700px; /* Increased to 700px for full content */
             overflow: visible; /* Prevents content from being hidden */
+            width: 100%; /* Takes full available width */
         }
 
         .combination-bar-item:hover {
@@ -550,10 +551,11 @@
         .combination-value {
             font-weight: bold;
             color: #0D8BB1;
-            min-width: 140px; /* Increased from 100px to 140px */
+            min-width: 160px; /* Increased to 160px for full visibility */
             text-align: right;
             font-size: 16px;
             flex-shrink: 0; /* Prevents shrinking */
+            padding-left: 10px; /* Additional space buffer */
         }
 
         .confidence {
@@ -1771,16 +1773,16 @@
                 }
             });
             
-            // Enhanced scattered layout positioning for maximum space utilization
+            // Enhanced scattered layout positioning for maximum field utilization
             const nodeArray = Array.from(nodes.values());
             const centerX = canvas.width / 2;
             const centerY = canvas.height / 2;
-            const radius = Math.min(canvas.width, canvas.height) / 2 - 120; // Optimized margin
+            const radius = Math.min(canvas.width, canvas.height) / 2 - 80; // Reduced margin for larger field
             
-            // Create wider concentric circles for optimal distribution and link visibility
-            const innerRadius = radius * 0.25; // Reduced inner radius
-            const middleRadius = radius * 0.65; // Increased middle radius
-            const outerRadius = radius * 0.9;   // Maximized outer radius
+            // Create wider concentric circles that use nearly the entire field
+            const innerRadius = radius * 0.3;  // Expanded inner radius
+            const middleRadius = radius * 0.7;  // Expanded middle radius
+            const outerRadius = radius * 0.95;  // Use almost the entire field
             
             nodeArray.forEach((node, index) => {
                 const third = Math.floor(nodeArray.length / 3);
@@ -1854,10 +1856,10 @@
                     }
                 });
                 
-                // Keep nodes in bounds with generous margins
+                // Keep nodes in bounds with minimal margins for maximum field usage
                 nodes.forEach(node => {
-                    node.x = Math.max(120, Math.min(canvas.width - 120, node.x));
-                    node.y = Math.max(120, Math.min(canvas.height - 120, node.y));
+                    node.x = Math.max(90, Math.min(canvas.width - 90, node.x));
+                    node.y = Math.max(90, Math.min(canvas.height - 90, node.y));
                 });
             }
             
@@ -1886,8 +1888,8 @@
                     else if (normalizedWeight < 0.8) ctx.strokeStyle = '#42A5F5'; // Enhanced blue
                     else ctx.strokeStyle = '#AB47BC'; // Enhanced purple
                     
-                    ctx.lineWidth = Math.max(3, edge.weight * 1.5); // Thicker lines
-                    ctx.globalAlpha = 0.9; // Slightly less transparent
+                    ctx.lineWidth = Math.max(2, edge.weight * 0.8); // Much thinner lines
+                    ctx.globalAlpha = 0.8; // Balanced transparency
                     ctx.stroke();
                     ctx.globalAlpha = 1;
                 }
