@@ -1065,31 +1065,34 @@
                         </div>
                         <!-- Color Legend -->
                         <div class="color-legend">
-                            <div class="legend-title">🎨 Легенда за силата на връзките:</div>
+                            <div class="legend-title">🎨 Легенда за силата на връзките (поддръжка %):</div>
                             <div class="legend-items">
                                 <div class="legend-item">
-                                    <div class="legend-color" style="background: #ff6b6b;"></div>
-                                    <div class="legend-text">Слаби връзки (3-4)</div>
+                                    <div class="legend-color" style="background: #FF6B6B;"></div>
+                                    <div class="legend-text">Много слаби (&lt; 20%)</div>
                                 </div>
                                 <div class="legend-item">
-                                    <div class="legend-color" style="background: #ffa726;"></div>
-                                    <div class="legend-text">Умерени връзки (5-6)</div>
+                                    <div class="legend-color" style="background: #FFD93D;"></div>
+                                    <div class="legend-text">🟡 Слаби (20-39%)</div>
                                 </div>
                                 <div class="legend-item">
-                                    <div class="legend-color" style="background: #ffeb3b;"></div>
-                                    <div class="legend-text">Добри връзки (7-8)</div>
+                                    <div class="legend-color" style="background: #6BCF7F;"></div>
+                                    <div class="legend-text">🟢 Умерени (40-59%)</div>
                                 </div>
                                 <div class="legend-item">
-                                    <div class="legend-color" style="background: #66bb6a;"></div>
-                                    <div class="legend-text">Силни връзки (9-10)</div>
+                                    <div class="legend-color" style="background: #4D96FF;"></div>
+                                    <div class="legend-text">🔵 Силни (60-79%)</div>
                                 </div>
                                 <div class="legend-item">
-                                    <div class="legend-color" style="background: #42a5f5;"></div>
-                                    <div class="legend-text">Много силни връзки (11-12)</div>
+                                    <div class="legend-color" style="background: #AB47BC;"></div>
+                                    <div class="legend-text">🟣 Най-силни (80-100%)</div>
                                 </div>
-                                <div class="legend-item">
-                                    <div class="legend-color" style="background: #ab47bc;"></div>
-                                    <div class="legend-text">Най-силни връзки (13+)</div>
+                            </div>
+                            <!-- Explanation for numbers -->
+                            <div style="margin-top: 15px; padding: 10px; background: #f0f8ff; border-radius: 8px; border-left: 4px solid #4D96FF;">
+                                <div style="font-size: 13px; color: #555; text-align: center;">
+                                    💡 <strong>Обяснение:</strong> Поддръжката показва колко често (в %) се срещат продуктите заедно в транзакциите.
+                                    <br>Дебелината на линията отговаря на силата на връзката.
                                 </div>
                             </div>
                         </div>
@@ -1880,15 +1883,15 @@
                     ctx.moveTo(source.x, source.y);
                     ctx.lineTo(target.x, target.y);
                     
-                    // Enhanced color coding with better visibility
-                    const normalizedWeight = Math.min(edge.weight / 5, 1);
-                    if (normalizedWeight < 0.2) ctx.strokeStyle = '#EF5350'; // Enhanced red
-                    else if (normalizedWeight < 0.4) ctx.strokeStyle = '#FF7043'; // Enhanced orange
-                    else if (normalizedWeight < 0.6) ctx.strokeStyle = '#66BB6A'; // Enhanced green
-                    else if (normalizedWeight < 0.8) ctx.strokeStyle = '#42A5F5'; // Enhanced blue
-                    else ctx.strokeStyle = '#AB47BC'; // Enhanced purple
+                    // Color coding based on support percentage according to legend
+                    const supportPercent = edge.weight; // edge.weight is already combo.support
+                    if (supportPercent < 20) ctx.strokeStyle = '#FF6B6B'; // Light red for very low support
+                    else if (supportPercent < 40) ctx.strokeStyle = '#FFD93D'; // Yellow: 20-39%
+                    else if (supportPercent < 60) ctx.strokeStyle = '#6BCF7F'; // Green: 40-59%
+                    else if (supportPercent < 80) ctx.strokeStyle = '#4D96FF'; // Blue: 60-79%
+                    else ctx.strokeStyle = '#AB47BC'; // Purple: 80-100%
                     
-                    ctx.lineWidth = Math.max(2, edge.weight * 0.8); // Much thinner lines
+                    ctx.lineWidth = Math.max(1.5, supportPercent * 0.08); // Line thickness based on support %
                     ctx.globalAlpha = 0.8; // Balanced transparency
                     ctx.stroke();
                     ctx.globalAlpha = 1;
