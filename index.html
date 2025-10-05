@@ -1724,7 +1724,7 @@
 
         function renderNetworkDiagram(results) {
             const container = document.getElementById('networkDiagram');
-            container.innerHTML = '<canvas id="networkCanvas" width="1000" height="600" style="border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);"></canvas>';
+            container.innerHTML = '<canvas id="networkCanvas" width="1200" height="800" style="border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 1200px;"></canvas>';
             
             const canvas = document.getElementById('networkCanvas');
             const ctx = canvas.getContext('2d');
@@ -1744,7 +1744,7 @@
                             id: item,
                             x: 0, // Will be positioned later
                             y: 0,
-                            radius: 35,
+                            radius: 45,
                             connections: 0
                         });
                     }
@@ -1763,16 +1763,30 @@
                 }
             });
             
-            // Improved circular layout positioning
+            // Enhanced scattered layout positioning for better space utilization
             const nodeArray = Array.from(nodes.values());
             const centerX = canvas.width / 2;
             const centerY = canvas.height / 2;
-            const radius = Math.min(canvas.width, canvas.height) / 2 - 80;
+            const radius = Math.min(canvas.width, canvas.height) / 2 - 120;
+            
+            // Create multiple concentric circles for better distribution
+            const innerRadius = radius * 0.4;
+            const outerRadius = radius * 0.8;
             
             nodeArray.forEach((node, index) => {
-                const angle = (index / nodeArray.length) * 2 * Math.PI;
-                node.x = centerX + Math.cos(angle) * radius;
-                node.y = centerY + Math.sin(angle) * radius;
+                if (index < nodeArray.length / 2) {
+                    // Inner circle for half the nodes
+                    const angle = (index / (nodeArray.length / 2)) * 2 * Math.PI;
+                    node.x = centerX + Math.cos(angle) * innerRadius;
+                    node.y = centerY + Math.sin(angle) * innerRadius;
+                } else {
+                    // Outer circle for the other half
+                    const adjustedIndex = index - Math.floor(nodeArray.length / 2);
+                    const outerCount = nodeArray.length - Math.floor(nodeArray.length / 2);
+                    const angle = (adjustedIndex / outerCount) * 2 * Math.PI + Math.PI / outerCount; // Offset for better distribution
+                    node.x = centerX + Math.cos(angle) * outerRadius;
+                    node.y = centerY + Math.sin(angle) * outerRadius;
+                }
             });
             
             // Improved force simulation for better spacing
@@ -1787,8 +1801,8 @@
                         const dy = nodeB.y - nodeA.y;
                         const distance = Math.sqrt(dx * dx + dy * dy);
                         
-                        if (distance > 0 && distance < 150) {
-                            const repulsion = 5000 / (distance * distance);
+                        if (distance > 0 && distance < 200) {
+                            const repulsion = 8000 / (distance * distance);
                             const fx = (dx / distance) * repulsion;
                             const fy = (dy / distance) * repulsion;
                             
@@ -1810,8 +1824,8 @@
                         const dy = target.y - source.y;
                         const distance = Math.sqrt(dx * dx + dy * dy);
                         
-                        if (distance > 100) {
-                            const attraction = (distance - 120) * 0.02;
+                        if (distance > 150) {
+                            const attraction = (distance - 180) * 0.015;
                             const fx = (dx / distance) * attraction;
                             const fy = (dy / distance) * attraction;
                             
@@ -1825,8 +1839,8 @@
                 
                 // Keep nodes in bounds with better margins
                 nodes.forEach(node => {
-                    node.x = Math.max(60, Math.min(canvas.width - 60, node.x));
-                    node.y = Math.max(60, Math.min(canvas.height - 60, node.y));
+                    node.x = Math.max(80, Math.min(canvas.width - 80, node.x));
+                    node.y = Math.max(80, Math.min(canvas.height - 80, node.y));
                 });
             }
             
@@ -2143,8 +2157,22 @@
             document.getElementById('report-analysis').value = analysisId;
             document.getElementById('report-title').value = analysis.name;
             
-            // Generate preview
-            generateReportPreview(analysis);
+            // Store current results for chart generation
+            window.currentResults = analysis.results;
+            
+            // Force regenerate charts for the report
+            setTimeout(() => {
+                // Regenerate bar chart image
+                generateBarChartImage();
+                
+                // Regenerate network diagram image
+                renderNetworkDiagram(analysis.results);
+                
+                // Generate preview after charts are ready
+                setTimeout(() => {
+                    generateReportPreview(analysis);
+                }, 100);
+            }, 100);
             
             // Enable action buttons
             document.getElementById('generate-pdf-btn').disabled = false;
@@ -2372,7 +2400,19 @@
             if (analysisId) {
                 const analysis = analysisHistory.find(a => a.id === analysisId);
                 if (analysis) {
-                    generateReportPreview(analysis);
+                    // Store current results for chart generation
+                    window.currentResults = analysis.results;
+                    
+                    // Regenerate charts before preview
+                    setTimeout(() => {
+                        generateBarChartImage();
+                        renderNetworkDiagram(analysis.results);
+                        
+                        setTimeout(() => {
+                            generateReportPreview(analysis);
+                        }, 100);
+                    }, 50);
+                    
                     document.getElementById('generate-pdf-btn').disabled = false;
                     document.getElementById('export-html-btn').disabled = false;
                     document.getElementById('save-template-btn').disabled = false;
@@ -2591,6 +2631,27 @@
             localStorage.setItem('bi_report_templates', JSON.stringify(templates));
             
             showNotification('💾 Шаблонът за доклад е запазен!', 'success');
+        });
+        
+        // Add event listeners for report settings to auto-update preview
+        const reportSettings = [
+            'include-summary', 'include-stats', 'include-combinations', 
+            'include-recommendations', 'include-charts', 'report-language'
+        ];
+        
+        reportSettings.forEach(settingId => {
+            const element = document.getElementById(settingId);
+            if (element) {
+                element.addEventListener('change', function() {
+                    const analysisId = document.getElementById('report-analysis').value;
+                    if (analysisId) {
+                        const analysis = analysisHistory.find(a => a.id === analysisId);
+                        if (analysis) {
+                            generateReportPreview(analysis);
+                        }
+                    }
+                });
+            }
         });
     </script>
 </body>
