@@ -1650,43 +1650,157 @@
             }).join('');
             
             barChart.innerHTML = barChartHTML;
+            
+            // Generate chart image for reports after DOM update
+            setTimeout(() => {
+                generateBarChartImage();
+            }, 100);
+        }
+        
+        // Generate bar chart as image for reports
+        function generateBarChartImage() {
+            const barChart = document.getElementById('simpleBarChart');
+            if (!barChart || !window.currentResults) return;
+            
+            // Create a canvas to render the bar chart
+            const canvas = document.createElement('canvas');
+            canvas.width = 800;
+            canvas.height = 400;
+            const ctx = canvas.getContext('2d');
+            
+            // Background
+            const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            gradient.addColorStop(0, '#f8fdff');
+            gradient.addColorStop(1, '#e0f4f7');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Title
+            ctx.fillStyle = '#0D8BB1';
+            ctx.font = 'bold 24px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('📊 Топ комбинации от продукти', canvas.width / 2, 40);
+            
+            const combinations = window.currentResults.combinations.slice(0, 8); // Top 8 for better fit
+            const barHeight = 35;
+            const barSpacing = 10;
+            const startY = 80;
+            const maxBarWidth = 500;
+            const startX = 250;
+            
+            combinations.forEach((combo, index) => {
+                const y = startY + index * (barHeight + barSpacing);
+                const barWidth = Math.min((combo.support / 10) * maxBarWidth, maxBarWidth);
+                
+                // Bar background
+                ctx.fillStyle = '#e0f4f7';
+                ctx.fillRect(startX, y, maxBarWidth, barHeight);
+                
+                // Bar fill
+                const barGradient = ctx.createLinearGradient(startX, y, startX + barWidth, y);
+                barGradient.addColorStop(0, '#0D8BB1');
+                barGradient.addColorStop(1, '#4A90A4');
+                ctx.fillStyle = barGradient;
+                ctx.fillRect(startX, y, barWidth, barHeight);
+                
+                // Label
+                ctx.fillStyle = '#333';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'right';
+                let label = combo.combination.join(' + ');
+                if (label.length > 25) label = label.substring(0, 25) + '...';
+                ctx.fillText(label, startX - 10, y + barHeight / 2 + 5);
+                
+                // Value
+                ctx.fillStyle = '#0D8BB1';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillText(combo.support.toFixed(2) + '%', startX + maxBarWidth + 10, y + barHeight / 2 + 5);
+            });
+            
+            // Store the image
+            window.currentBarChartImage = canvas.toDataURL('image/png');
         }
 
         function renderNetworkDiagram(results) {
             const container = document.getElementById('networkDiagram');
-            container.innerHTML = '<canvas id="networkCanvas" width="800" height="400"></canvas>';
+            container.innerHTML = '<canvas id="networkCanvas" width="1000" height="600" style="border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);"></canvas>';
             
             const canvas = document.getElementById('networkCanvas');
             const ctx = canvas.getContext('2d');
             
             if (!results || !results.combinations) return;
             
-            // Prepare network data
+            // Prepare network data - limit to 12 items for better readability
             const nodes = new Map();
             const edges = [];
+            const maxNodes = 12;
             
-            // Create nodes from items
-            results.combinations.slice(0, 15).forEach(combo => {
+            // Create nodes from items with improved spacing
+            results.combinations.slice(0, maxNodes).forEach(combo => {
                 combo.combination.forEach(item => {
-                    if (!nodes.has(item)) {
+                    if (!nodes.has(item) && nodes.size < maxNodes) {
                         nodes.set(item, {
                             id: item,
-                            x: Math.random() * (canvas.width - 100) + 50,
-                            y: Math.random() * (canvas.height - 100) + 50,
-                            radius: 20
+                            x: 0, // Will be positioned later
+                            y: 0,
+                            radius: 35,
+                            connections: 0
                         });
                     }
                 });
                 
-                edges.push({
-                    source: combo.combination[0],
-                    target: combo.combination[1],
-                    weight: combo.support
-                });
+                if (nodes.has(combo.combination[0]) && nodes.has(combo.combination[1])) {
+                    edges.push({
+                        source: combo.combination[0],
+                        target: combo.combination[1],
+                        weight: combo.support
+                    });
+                    
+                    // Count connections for each node
+                    nodes.get(combo.combination[0]).connections++;
+                    nodes.get(combo.combination[1]).connections++;
+                }
             });
             
-            // Simple force simulation
-            for (let iteration = 0; iteration < 100; iteration++) {
+            // Improved circular layout positioning
+            const nodeArray = Array.from(nodes.values());
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = Math.min(canvas.width, canvas.height) / 2 - 80;
+            
+            nodeArray.forEach((node, index) => {
+                const angle = (index / nodeArray.length) * 2 * Math.PI;
+                node.x = centerX + Math.cos(angle) * radius;
+                node.y = centerY + Math.sin(angle) * radius;
+            });
+            
+            // Improved force simulation for better spacing
+            for (let iteration = 0; iteration < 200; iteration++) {
+                // Repulsion between all nodes
+                for (let i = 0; i < nodeArray.length; i++) {
+                    for (let j = i + 1; j < nodeArray.length; j++) {
+                        const nodeA = nodeArray[i];
+                        const nodeB = nodeArray[j];
+                        
+                        const dx = nodeB.x - nodeA.x;
+                        const dy = nodeB.y - nodeA.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance > 0 && distance < 150) {
+                            const repulsion = 5000 / (distance * distance);
+                            const fx = (dx / distance) * repulsion;
+                            const fy = (dy / distance) * repulsion;
+                            
+                            nodeA.x -= fx;
+                            nodeA.y -= fy;
+                            nodeB.x += fx;
+                            nodeB.y += fy;
+                        }
+                    }
+                }
+                
+                // Attraction along edges
                 edges.forEach(edge => {
                     const source = nodes.get(edge.source);
                     const target = nodes.get(edge.target);
@@ -1696,30 +1810,34 @@
                         const dy = target.y - source.y;
                         const distance = Math.sqrt(dx * dx + dy * dy);
                         
-                        if (distance > 0) {
-                            const force = (edge.weight - distance) * 0.01;
-                            const fx = (dx / distance) * force;
-                            const fy = (dy / distance) * force;
+                        if (distance > 100) {
+                            const attraction = (distance - 120) * 0.02;
+                            const fx = (dx / distance) * attraction;
+                            const fy = (dy / distance) * attraction;
                             
-                            source.x -= fx;
-                            source.y -= fy;
-                            target.x += fx;
-                            target.y += fy;
+                            source.x += fx;
+                            source.y += fy;
+                            target.x -= fx;
+                            target.y -= fy;
                         }
                     }
                 });
                 
-                // Keep nodes in bounds
+                // Keep nodes in bounds with better margins
                 nodes.forEach(node => {
-                    node.x = Math.max(30, Math.min(canvas.width - 30, node.x));
-                    node.y = Math.max(30, Math.min(canvas.height - 30, node.y));
+                    node.x = Math.max(60, Math.min(canvas.width - 60, node.x));
+                    node.y = Math.max(60, Math.min(canvas.height - 60, node.y));
                 });
             }
             
-            // Clear canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Clear canvas with gradient background
+            const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            gradient.addColorStop(0, '#f8fdff');
+            gradient.addColorStop(1, '#e0f4f7');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // Draw edges
+            // Draw edges with improved styling
             edges.forEach(edge => {
                 const source = nodes.get(edge.source);
                 const target = nodes.get(edge.target);
@@ -1729,44 +1847,78 @@
                     ctx.moveTo(source.x, source.y);
                     ctx.lineTo(target.x, target.y);
                     
-                    // Color based on weight
-                    const normalizedWeight = edge.weight / 10;
-                    if (normalizedWeight < 0.4) ctx.strokeStyle = '#ff6b6b';
-                    else if (normalizedWeight < 0.6) ctx.strokeStyle = '#ffa726';
-                    else if (normalizedWeight < 0.8) ctx.strokeStyle = '#ffeb3b';
-                    else if (normalizedWeight < 1.0) ctx.strokeStyle = '#66bb6a';
-                    else if (normalizedWeight < 1.2) ctx.strokeStyle = '#42a5f5';
+                    // Enhanced color coding based on weight
+                    const normalizedWeight = Math.min(edge.weight / 5, 1);
+                    if (normalizedWeight < 0.2) ctx.strokeStyle = '#ff6b6b';
+                    else if (normalizedWeight < 0.4) ctx.strokeStyle = '#ffa726';
+                    else if (normalizedWeight < 0.6) ctx.strokeStyle = '#66bb6a';
+                    else if (normalizedWeight < 0.8) ctx.strokeStyle = '#42a5f5';
                     else ctx.strokeStyle = '#ab47bc';
                     
-                    ctx.lineWidth = Math.max(1, edge.weight / 2);
+                    ctx.lineWidth = Math.max(2, edge.weight);
+                    ctx.globalAlpha = 0.8;
                     ctx.stroke();
+                    ctx.globalAlpha = 1;
                 }
             });
             
-            // Draw nodes
+            // Draw nodes with enhanced styling
             nodes.forEach(node => {
+                // Node shadow
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+                ctx.shadowBlur = 8;
+                ctx.shadowOffsetX = 3;
+                ctx.shadowOffsetY = 3;
+                
+                // Main node circle
                 ctx.beginPath();
                 ctx.arc(node.x, node.y, node.radius, 0, 2 * Math.PI);
-                ctx.fillStyle = '#0D8BB1';
+                
+                // Node color based on connections
+                const connectionRatio = Math.min(node.connections / 3, 1);
+                if (connectionRatio < 0.3) ctx.fillStyle = '#42a5f5';
+                else if (connectionRatio < 0.6) ctx.fillStyle = '#0D8BB1';
+                else ctx.fillStyle = '#4A90A4';
+                
                 ctx.fill();
-                ctx.strokeStyle = '#4A90A4';
-                ctx.lineWidth = 3;
+                
+                // Reset shadow
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 0;
+                
+                // Node border
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 4;
                 ctx.stroke();
                 
-                // Node label
-                ctx.fillStyle = '#333';
-                ctx.font = '12px Arial';
+                // Node label with better formatting
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 11px Arial';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 
-                // Truncate long text
+                // Smart text truncation and wrapping
                 let text = node.id;
-                if (text.length > 10) {
-                    text = text.substring(0, 10) + '...';
+                if (text.length > 8) {
+                    const words = text.split(' ');
+                    if (words.length > 1) {
+                        text = words[0].substring(0, 6) + '...';
+                    } else {
+                        text = text.substring(0, 8) + '...';
+                    }
                 }
                 
+                // Text outline for better readability
+                ctx.strokeStyle = '#0D8BB1';
+                ctx.lineWidth = 3;
+                ctx.strokeText(text, node.x, node.y);
                 ctx.fillText(text, node.x, node.y);
             });
+            
+            // Store canvas as image for reports
+            window.currentNetworkDiagramImage = canvas.toDataURL('image/png');
         }
 
         // ===============================
@@ -1946,6 +2098,12 @@
             displayMarketBasketResults(analysis.results);
             document.getElementById('market-basket-results').style.display = 'block';
             
+            // Regenerate charts for reports
+            setTimeout(() => {
+                renderResults(); // This will regenerate bar chart image
+                renderNetworkDiagram(analysis.results); // This will regenerate network diagram image
+            }, 200);
+            
             // Update visualization
             document.getElementById('charts-container').style.display = 'block';
             document.getElementById('no-visualization').style.display = 'none';
@@ -2003,6 +2161,7 @@
             const includeCombinations = document.getElementById('include-combinations').checked;
             const includeRecommendations = document.getElementById('include-recommendations').checked;
             const includeSummary = document.getElementById('include-summary').checked;
+            const includeCharts = document.getElementById('include-charts').checked;
             
             const isEnglish = language === 'en';
             
@@ -2126,6 +2285,36 @@
                 `;
             }
             
+            // Add charts section if requested
+            if (includeCharts) {
+                previewHTML += `
+                    <div class="report-section">
+                        <h2 style="color: #0D8BB1; border-bottom: 2px solid #e0f4f7; padding-bottom: 10px;">
+                            ${isEnglish ? '📊 Visual Analysis Charts' : '📊 Визуални графики на анализа'}
+                        </h2>
+                        <div style="margin: 20px 0; text-align: center;">
+                            ${window.currentBarChartImage ? 
+                                `<div style="margin-bottom: 30px;">
+                                    <h3 style="color: #4A90A4; margin-bottom: 15px;">${isEnglish ? 'Top Product Combinations' : 'Топ комбинации от продукти'}</h3>
+                                    <img src="${window.currentBarChartImage}" style="max-width: 100%; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);" alt="Bar Chart" />
+                                </div>` : 
+                                `<p style="color: #666; font-style: italic;">${isEnglish ? 'Bar chart not available - please run analysis first' : 'Колонна диаграма не е налична - моля, първо направете анализ'}</p>`
+                            }
+                            ${window.currentNetworkDiagramImage ? 
+                                `<div style="margin-bottom: 20px;">
+                                    <h3 style="color: #4A90A4; margin-bottom: 15px;">${isEnglish ? 'Product Relationship Network' : 'Мрежа от връзки между продукти'}</h3>
+                                    <img src="${window.currentNetworkDiagramImage}" style="max-width: 100%; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);" alt="Network Diagram" />
+                                </div>` : 
+                                `<p style="color: #666; font-style: italic;">${isEnglish ? 'Network diagram not available - please run analysis first' : 'Мрежова диаграма не е налична - моля, първо направете анализ'}</p>`
+                            }
+                        </div>
+                        <p style="color: #666; font-size: 12px; text-align: center; margin-top: 20px;">
+                            ${isEnglish ? 'Charts generated automatically based on market basket analysis results' : 'Графиките са генерирани автоматично въз основа на резултатите от market basket анализа'}
+                        </p>
+                    </div>
+                `;
+            }
+            
             document.getElementById('report-preview-content').innerHTML = previewHTML;
         }
 
@@ -2238,12 +2427,18 @@
             
             // Create printable HTML
             const reportContent = document.getElementById('report-preview-content').innerHTML;
+            const reportTitle = document.getElementById('report-title').value;
+            const currentDate = new Date().toLocaleDateString('bg-BG').replace(/\./g, '_');
+            const defaultName = `Market_Basket_Analysis_${currentDate}`;
+            const finalTitle = reportTitle || defaultName;
+            const safeFileName = finalTitle.replace(/[^a-zA-Z0-9\u0400-\u04FF]/g, '_');
+            
             const printWindow = window.open('', '_blank');
             printWindow.document.write(`
                 <!DOCTYPE html>
                 <html>
                 <head>
-                    <title>${document.getElementById('report-title').value}</title>
+                    <title>${finalTitle}</title>
                     <style>
                         body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
                         .report-section { margin-bottom: 30px; }
@@ -2262,8 +2457,9 @@
             `);
             printWindow.document.close();
             
-            // Trigger print dialog
+            // Set document title for PDF filename suggestion
             setTimeout(() => {
+                printWindow.document.title = safeFileName;
                 printWindow.print();
             }, 500);
             
@@ -2358,7 +2554,11 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `${document.getElementById('report-title').value.replace(/[^a-zA-Z0-9\u0400-\u04FF]/g, '_')}.html`;
+            const reportTitle = document.getElementById('report-title').value;
+            const currentDate = new Date().toLocaleDateString('bg-BG').replace(/\./g, '_');
+            const defaultName = `Market_Basket_Analysis_${currentDate}`;
+            const downloadFileName = reportTitle || defaultName;
+            a.download = `${downloadFileName.replace(/[^a-zA-Z0-9\u0400-\u04FF]/g, '_')}.html`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
