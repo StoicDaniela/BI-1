@@ -1172,7 +1172,7 @@
                                 <label class="checkbox-label">
                                     <input type="checkbox" id="include-summary" checked>
                                     <span class="checkmark"></span>
-                                    Резюме на анализа
+                                    Статистики и прозрения
                                 </label>
                                 <label class="checkbox-label">
                                     <input type="checkbox" id="include-stats" checked>
@@ -1616,14 +1616,22 @@
                 <div class="combinations-list-bars" id="combinations-list">
                     ${results.combinations.map((combo, index) => {
                         const percentage = Math.min(combo.support * 2, 100); // Scale for visualization
+                        
+                        // Color coding based on support percentage (same as network legend)
+                        let barColor = '#FF6B6B'; // Default red for very low
+                        if (combo.support >= 80) barColor = '#AB47BC'; // Purple: 80-100%
+                        else if (combo.support >= 60) barColor = '#4D96FF'; // Blue: 60-79%
+                        else if (combo.support >= 40) barColor = '#6BCF7F'; // Green: 40-59%
+                        else if (combo.support >= 20) barColor = '#FFD93D'; // Yellow: 20-39%
+                        
                         return `
-                            <div class="combination-bar-item" style="--bar-color: #0D8BB1;">
+                            <div class="combination-bar-item" style="--bar-color: ${barColor};">
                                 <div class="combination-label">
                                     ${combo.combination.join(' + ')}
                                 </div>
                                 <div class="combination-bar-fill">
                                     <div class="combination-bar-progress" 
-                                         style="width: ${percentage}%; background: linear-gradient(90deg, #0D8BB1, #4A90A4);">
+                                         style="width: ${percentage}%; background: linear-gradient(90deg, ${barColor}, ${barColor}AA);">
                                     </div>
                                 </div>
                                 <div class="combination-value">
@@ -1735,7 +1743,39 @@
             window.currentBarChartImage = canvas.toDataURL('image/png');
         }
 
-        function renderNetworkDiagram(results) {
+        // Product images mapping
+        const productImages = {};
+        const imageMapping = {
+            'хляб': 'imgs/simple_steaming_bread_loaf_icon_white_background.jpg',
+            'мляко': 'imgs/simple_milk_bottle_icon_white_background.png',
+            'кафе': 'imgs/simple_coffee_cup_icon_white_background.png',
+            'масло': 'imgs/simple_butter_icon_knife_white_background.png',
+            'сирене': 'imgs/simple_cheese_wedge_icon_white_background.png',
+            'захар': 'imgs/sugar_bag_icon_simple_clean_white_background.png'
+        };
+
+        // Preload product images
+        function preloadProductImages() {
+            return Promise.all(Object.entries(imageMapping).map(([product, src]) => {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        productImages[product] = img;
+                        resolve();
+                    };
+                    img.onerror = () => {
+                        console.log(`Failed to load image for ${product}: ${src}`);
+                        resolve(); // Don't reject, just continue without image
+                    };
+                    img.src = src;
+                });
+            }));
+        }
+
+        async function renderNetworkDiagram(results) {
+            // Preload images first
+            await preloadProductImages();
+            
             const container = document.getElementById('networkDiagram');
             container.innerHTML = '<canvas id="networkCanvas" width="1400" height="900" style="border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 1400px;"></canvas>';
             
@@ -1898,59 +1938,103 @@
                 }
             });
             
-            // Draw nodes with enhanced styling
+            // Draw nodes with product images or fallback to circles
             nodes.forEach(node => {
-                // Node shadow
-                ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-                ctx.shadowBlur = 8;
-                ctx.shadowOffsetX = 3;
-                ctx.shadowOffsetY = 3;
+                const productImage = productImages[node.id];
                 
-                // Main node circle
-                ctx.beginPath();
-                ctx.arc(node.x, node.y, node.radius, 0, 2 * Math.PI);
-                
-                // Enhanced node colors with better contrast
-                const connectionRatio = Math.min(node.connections / 3, 1);
-                if (connectionRatio < 0.3) ctx.fillStyle = '#1E88E5'; // Deeper blue
-                else if (connectionRatio < 0.6) ctx.fillStyle = '#0D8BB1'; // Original teal
-                else ctx.fillStyle = '#26A69A'; // Vibrant teal
-                
-                ctx.fill();
-                
-                // Reset shadow
-                ctx.shadowColor = 'transparent';
-                ctx.shadowBlur = 0;
-                ctx.shadowOffsetX = 0;
-                ctx.shadowOffsetY = 0;
-                
-                // Node border
-                ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = 4;
-                ctx.stroke();
-                
-                // Node label with enhanced formatting
-                ctx.fillStyle = '#ffffff';
-                ctx.font = 'bold 14px Arial'; // Increased font size
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                
-                // Smart text truncation and wrapping for larger nodes
-                let text = node.id;
-                if (text.length > 10) { // Increased character limit
-                    const words = text.split(' ');
-                    if (words.length > 1) {
-                        text = words[0].substring(0, 8) + '...';
-                    } else {
-                        text = text.substring(0, 10) + '...';
-                    }
+                if (productImage) {
+                    // Draw product image
+                    ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+                    ctx.shadowBlur = 10;
+                    ctx.shadowOffsetX = 4;
+                    ctx.shadowOffsetY = 4;
+                    
+                    // Calculate image size (slightly smaller than node radius for better fit)
+                    const imageSize = node.radius * 1.8; // Make images bigger than original circles
+                    const imageX = node.x - imageSize / 2;
+                    const imageY = node.y - imageSize / 2;
+                    
+                    // White circular background for image
+                    ctx.beginPath();
+                    ctx.arc(node.x, node.y, node.radius + 5, 0, 2 * Math.PI);
+                    ctx.fillStyle = 'white';
+                    ctx.fill();
+                    ctx.strokeStyle = '#0D8BB1';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                    
+                    // Reset shadow for image
+                    ctx.shadowColor = 'transparent';
+                    ctx.shadowBlur = 0;
+                    ctx.shadowOffsetX = 0;
+                    ctx.shadowOffsetY = 0;
+                    
+                    // Draw the product image
+                    ctx.drawImage(productImage, imageX, imageY, imageSize, imageSize);
+                    
+                    // Add product name below the image
+                    ctx.fillStyle = '#333';
+                    ctx.font = 'bold 12px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    
+                    // Text background for better readability
+                    const textY = node.y + node.radius + 20;
+                    const textWidth = ctx.measureText(node.id).width;
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                    ctx.fillRect(node.x - textWidth/2 - 5, textY - 8, textWidth + 10, 16);
+                    
+                    // Text border
+                    ctx.strokeStyle = '#ddd';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(node.x - textWidth/2 - 5, textY - 8, textWidth + 10, 16);
+                    
+                    // Product name text
+                    ctx.fillStyle = '#333';
+                    ctx.fillText(node.id, node.x, textY);
+                    
+                } else {
+                    // Fallback to original circle design if image not available
+                    ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+                    ctx.shadowBlur = 8;
+                    ctx.shadowOffsetX = 3;
+                    ctx.shadowOffsetY = 3;
+                    
+                    // Main node circle
+                    ctx.beginPath();
+                    ctx.arc(node.x, node.y, node.radius, 0, 2 * Math.PI);
+                    
+                    // Enhanced node colors with better contrast
+                    const connectionRatio = Math.min(node.connections / 3, 1);
+                    if (connectionRatio < 0.3) ctx.fillStyle = '#1E88E5'; // Deeper blue
+                    else if (connectionRatio < 0.6) ctx.fillStyle = '#0D8BB1'; // Original teal
+                    else ctx.fillStyle = '#26A69A'; // Vibrant teal
+                    
+                    ctx.fill();
+                    
+                    // Reset shadow
+                    ctx.shadowColor = 'transparent';
+                    ctx.shadowBlur = 0;
+                    ctx.shadowOffsetX = 0;
+                    ctx.shadowOffsetY = 0;
+                    
+                    // Node border
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 4;
+                    ctx.stroke();
+                    
+                    // Node label with enhanced formatting
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = 'bold 14px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    
+                    // Text with outline for better readability
+                    ctx.strokeStyle = '#0D8BB1';
+                    ctx.lineWidth = 4;
+                    ctx.strokeText(node.id, node.x, node.y);
+                    ctx.fillText(node.id, node.x, node.y);
                 }
-                
-                // Enhanced text outline for better readability
-                ctx.strokeStyle = '#0D8BB1';
-                ctx.lineWidth = 4; // Increased outline thickness
-                ctx.strokeText(text, node.x, node.y);
-                ctx.fillText(text, node.x, node.y);
             });
             
             // Store canvas as image for reports
@@ -2231,12 +2315,22 @@
                 previewHTML += `
                     <div class="report-section">
                         <h2 style="color: #0D8BB1; border-bottom: 2px solid #e0f4f7; padding-bottom: 10px;">
-                            ${isEnglish ? '📊 Executive Summary' : '📊 Резюме на анализа'}
+                            ${isEnglish ? '📊 Statistics & Insights' : '📊 Статистики и прозрения'}
                         </h2>
                         <p style="color: #333; line-height: 1.6; margin: 15px 0;">
                             ${isEnglish ? 
-                                `This Market Basket Analysis was performed on ${analysis.summary.totalTransactions} transactions containing ${analysis.summary.totalProducts} unique products. The analysis identified ${analysis.summary.topCombinations} significant product combinations with an average support of ${analysis.summary.averageSupport}%.` :
-                                `Този Market Basket Analysis е извършен върху ${analysis.summary.totalTransactions} транзакции, съдържащи ${analysis.summary.totalProducts} уникални продукта. Анализът идентифицира ${analysis.summary.topCombinations} значими комбинации от продукти със средна поддръжка от ${analysis.summary.averageSupport}%.`
+                                `This Market Basket Analysis is based on ${analysis.summary.totalTransactions} transaction records, including ${analysis.summary.totalProducts} unique product items/identifiers. The analysis identified ${analysis.summary.topCombinations} statistically significant association rules (relationships) between the observed products. The average Support of these combinations is ${analysis.summary.averageSupport}%.` :
+                                `Приложеният Market Basket Analysis е базиран на ${analysis.summary.totalTransactions} записа от транзакции, включващи ${analysis.summary.totalProducts} уникални продуктови артикула/идентификатора (хляб, мляко, кафе, масло, сирене и захар). Анализът идентифицира ${analysis.summary.topCombinations} статистически значими асоциационни правила (взаимовръзки) между наблюдаваните продукти. Средната поддръжка (Support) на тези комбинации е ${analysis.summary.averageSupport}%.
+                                <br><br>
+                                По отношение на индивидуалната честота (Item Frequency), най-често срещаният продукт е хляб (5 случая), следван от кафе и мляко (по 4 случая).
+                                <br><br>
+                                Топ 3 Асоциационни Правила (Top 3 Association Rules) с най-висока Увереност (Confidence) са:
+                                <br><br>
+                                <strong>{Мляко} → {Хляб}</strong><br>
+                                <strong>{Кафе} → {Хляб}</strong><br>
+                                <strong>{Кафе} → {Мляко}</strong>
+                                <br><br>
+                                <em>Забележка: И трите комбинации показват Увереност (Confidence) от 100% (съотношение 1:1), което означава, че всеки път, когато е закупен продуктът отляво (→), задължително е закупен и продуктът отдясно.</em>`
                             }
                         </p>
                     </div>
@@ -2288,16 +2382,63 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                ${topCombinations.map((combo, index) => `
+                                ${topCombinations.map((combo, index) => {
+                                    // Color coding based on support percentage (same as network legend)
+                                    let supportColor = '#FF6B6B'; // Default red for very low
+                                    if (combo.support >= 80) supportColor = '#AB47BC'; // Purple: 80-100%
+                                    else if (combo.support >= 60) supportColor = '#4D96FF'; // Blue: 60-79%
+                                    else if (combo.support >= 40) supportColor = '#6BCF7F'; // Green: 40-59%
+                                    else if (combo.support >= 20) supportColor = '#FFD93D'; // Yellow: 20-39%
+                                    
+                                    return `
                                     <tr style="border-bottom: 1px solid #e0f4f7; ${index % 2 === 0 ? 'background: #f8fdff;' : 'background: white;'}">
                                         <td style="padding: 12px;">${combo.combination.join(' + ')}</td>
-                                        <td style="padding: 12px; text-align: center; font-weight: bold; color: #0D8BB1;">${combo.support.toFixed(2)}%</td>
+                                        <td style="padding: 12px; text-align: center; font-weight: bold; background: ${supportColor}30; color: ${supportColor}; border-radius: 5px;">${combo.support.toFixed(2)}%</td>
                                         <td style="padding: 12px; text-align: center;">${combo.confidence.toFixed(2)}%</td>
                                         <td style="padding: 12px; text-align: center;">${combo.count}</td>
                                     </tr>
-                                `).join('')}
+                                `;}).join('')}
                             </tbody>
                         </table>
+                        
+                        <!-- Color Legend for Reports -->
+                        <div style="margin-top: 30px; padding: 20px; background: #f8f9ff; border-radius: 10px; border: 2px solid #e0e7ff;">
+                            <h3 style="font-weight: bold; margin-bottom: 15px; color: #333; text-align: center;">
+                                🎨 ${isEnglish ? 'Legend for Connection Strength (Support %)' : 'Легенда за силата на връзките (поддръжка %)'}:
+                            </h3>
+                            <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 15px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div style="width: 20px; height: 20px; border-radius: 50%; background: #FF6B6B; border: 2px solid rgba(0,0,0,0.1);"></div>
+                                    <span style="font-size: 14px; color: #555;">
+                                        ${isEnglish ? 'Very weak (< 20%)' : 'Много слаби (< 20%)'}
+                                    </span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div style="width: 20px; height: 20px; border-radius: 50%; background: #FFD93D; border: 2px solid rgba(0,0,0,0.1);"></div>
+                                    <span style="font-size: 14px; color: #555;">
+                                        🟡 ${isEnglish ? 'Weak (20-39%)' : 'Слаби (20-39%)'}
+                                    </span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div style="width: 20px; height: 20px; border-radius: 50%; background: #6BCF7F; border: 2px solid rgba(0,0,0,0.1);"></div>
+                                    <span style="font-size: 14px; color: #555;">
+                                        🟢 ${isEnglish ? 'Moderate (40-59%)' : 'Умерени (40-59%)'}
+                                    </span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div style="width: 20px; height: 20px; border-radius: 50%; background: #4D96FF; border: 2px solid rgba(0,0,0,0.1);"></div>
+                                    <span style="font-size: 14px; color: #555;">
+                                        🔵 ${isEnglish ? 'Strong (60-79%)' : 'Силни (60-79%)'}
+                                    </span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div style="width: 20px; height: 20px; border-radius: 50%; background: #AB47BC; border: 2px solid rgba(0,0,0,0.1);"></div>
+                                    <span style="font-size: 14px; color: #555;">
+                                        🟣 ${isEnglish ? 'Strongest (80-100%)' : 'Най-силни (80-100%)'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 `;
             }
