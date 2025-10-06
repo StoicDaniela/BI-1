@@ -1761,10 +1761,11 @@
                     const img = new Image();
                     img.onload = () => {
                         productImages[product] = img;
+                        console.log(`Successfully loaded image for ${product}: ${src}`);
                         resolve();
                     };
                     img.onerror = () => {
-                        console.log(`Failed to load image for ${product}: ${src}`);
+                        console.error(`Failed to load image for ${product}: ${src}`);
                         resolve(); // Don't reject, just continue without image
                     };
                     img.src = src;
@@ -1775,6 +1776,7 @@
         async function renderNetworkDiagram(results) {
             // Preload images first
             await preloadProductImages();
+            console.log('Loaded product images:', Object.keys(productImages));
             
             const container = document.getElementById('networkDiagram');
             container.innerHTML = '<canvas id="networkCanvas" width="1400" height="900" style="border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 1400px;"></canvas>';
@@ -1941,6 +1943,7 @@
             // Draw nodes with product images or fallback to circles
             nodes.forEach(node => {
                 const productImage = productImages[node.id];
+                console.log(`Drawing node ${node.id}, has image:`, !!productImage);
                 
                 if (productImage) {
                     // Draw product image
@@ -2366,6 +2369,20 @@
             }
             
             if (includeCombinations && analysis.results.combinations) {
+                // Function to get background color based on support percentage (same as network diagram)
+                function getBackgroundColorForSupport(supportPercent) {
+                    if (supportPercent < 20) return '#FF6B6B'; // Light red for very low support  
+                    else if (supportPercent < 40) return '#FFD93D'; // Yellow: 20-39%
+                    else if (supportPercent < 60) return '#6BCF7F'; // Green: 40-59%
+                    else if (supportPercent < 80) return '#4D96FF'; // Blue: 60-79%
+                    else return '#AB47BC'; // Purple: 80-100%
+                }
+
+                // Function to get text color for readability on colored backgrounds
+                function getTextColorForSupport(supportPercent) {
+                    return supportPercent >= 60 ? '#fff' : '#333'; // White text for dark backgrounds
+                }
+
                 const topCombinations = analysis.results.combinations.slice(0, 10);
                 previewHTML += `
                     <div class="report-section">
@@ -2383,21 +2400,17 @@
                             </thead>
                             <tbody>
                                 ${topCombinations.map((combo, index) => {
-                                    // Color coding based on support percentage (same as network legend)
-                                    let supportColor = '#FF6B6B'; // Default red for very low
-                                    if (combo.support >= 80) supportColor = '#AB47BC'; // Purple: 80-100%
-                                    else if (combo.support >= 60) supportColor = '#4D96FF'; // Blue: 60-79%
-                                    else if (combo.support >= 40) supportColor = '#6BCF7F'; // Green: 40-59%
-                                    else if (combo.support >= 20) supportColor = '#FFD93D'; // Yellow: 20-39%
-                                    
+                                    const bgColor = getBackgroundColorForSupport(combo.support);
+                                    const textColor = getTextColorForSupport(combo.support);
                                     return `
-                                    <tr style="border-bottom: 1px solid #e0f4f7; ${index % 2 === 0 ? 'background: #f8fdff;' : 'background: white;'}">
+                                    <tr style="border-bottom: 1px solid #e0f4f7; background: ${bgColor}; color: ${textColor};">
                                         <td style="padding: 12px;">${combo.combination.join(' + ')}</td>
-                                        <td style="padding: 12px; text-align: center; font-weight: bold; background: ${supportColor}30; color: ${supportColor}; border-radius: 5px;">${combo.support.toFixed(2)}%</td>
+                                        <td style="padding: 12px; text-align: center; font-weight: bold;">${combo.support.toFixed(2)}%</td>
                                         <td style="padding: 12px; text-align: center;">${combo.confidence.toFixed(2)}%</td>
                                         <td style="padding: 12px; text-align: center;">${combo.count}</td>
                                     </tr>
-                                `;}).join('')}
+                                    `;
+                                }).join('')}
                             </tbody>
                         </table>
                         
@@ -2628,8 +2641,10 @@
             const analysis = analysisHistory.find(a => a.id === analysisId);
             if (!analysis) return;
             
-            // Create printable HTML
+            // Create printable HTML with color legend included
             const reportContent = document.getElementById('report-preview-content').innerHTML;
+            const colorLegend = document.querySelector('.color-legend');
+            const legendHTML = colorLegend ? colorLegend.outerHTML : '';
             const reportTitle = document.getElementById('report-title').value;
             const currentDate = new Date().toLocaleDateString('bg-BG').replace(/\./g, '_');
             const defaultName = `Market_Basket_Analysis_${currentDate}`;
@@ -2647,6 +2662,10 @@
                         .report-section { margin-bottom: 30px; }
                         .report-header { page-break-after: avoid; }
                         table { page-break-inside: avoid; }
+                        .color-legend { margin: 20px 0; padding: 15px; background: #f9f9f9; border: 1px solid #ddd; }
+                        .color-legend h4 { margin-bottom: 10px; }
+                        .color-legend ul { list-style: none; padding: 0; margin: 0; }
+                        .color-legend li { margin: 5px 0; padding: 5px; }
                         @media print {
                             body { margin: 20px; }
                             .report-section { page-break-inside: avoid; }
@@ -2655,6 +2674,7 @@
                 </head>
                 <body>
                     ${reportContent}
+                    ${legendHTML}
                 </body>
                 </html>
             `);
@@ -2676,8 +2696,10 @@
             const analysis = analysisHistory.find(a => a.id === analysisId);
             if (!analysis) return;
             
-            // Create complete HTML file
+            // Create complete HTML file with color legend included
             const reportContent = document.getElementById('report-preview-content').innerHTML;
+            const colorLegend = document.querySelector('.color-legend');
+            const legendHTML = colorLegend ? colorLegend.outerHTML : '';
             const htmlContent = `
 <!DOCTYPE html>
 <html lang="bg">
@@ -2740,11 +2762,32 @@
             color: #4A90A4;
             font-size: 14px;
         }
+        .color-legend {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 10px;
+            border: 1px solid #e0f4f7;
+        }
+        .color-legend h4 {
+            margin-bottom: 10px;
+            color: #0D8BB1;
+        }
+        .color-legend ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .color-legend li {
+            margin: 5px 0;
+            padding: 5px;
+        }
     </style>
 </head>
 <body>
     <div class="report-container">
         ${reportContent}
+        ${legendHTML}
         <div class="ocean-footer">
             <p>🌊 Генериран от BI Система за Анализ на Данни | © ${new Date().getFullYear()}</p>
         </div>
