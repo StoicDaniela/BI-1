@@ -172,14 +172,10 @@
         .legend-green { background-color: #e8f5e8; color: #388e3c; }
         .legend-blue { background-color: #e3f2fd; color: #1976d2; }
 
-        #network {
-            border: 2px solid #0D8BB1;
-            border-radius: 10px;
-            background: white;
-            margin-top: 20px;
+        .network-container {
             width: 100%;
-            max-width: 100%;
-            height: auto;
+            text-align: center;
+            margin-top: 20px;
         }
     </style>
 </head>
@@ -243,8 +239,8 @@
             </table>
 
             <h3>🕸 Мрежа на Връзките (с Емоджи)</h3>
-            <div style="width: 100%; overflow-x: auto;">
-                <canvas id="network" width="700" height="400"></canvas>
+            <div style="width: 100%; text-align: center; overflow-x: auto;">
+                <canvas id="network" width="700" height="400" style="border: 2px solid #0D8BB1; border-radius: 10px; background: white;"></canvas>
             </div>
         </div>
     </div>
@@ -387,12 +383,21 @@
             });
 
             const productArray = Array.from(products);
-            const nodes = productArray.map((product, index) => ({
-                id: product,
-                x: Math.random() * (width - 100) + 50,
-                y: Math.random() * (height - 100) + 50,
-                emoji: getProductEmoji(product)
-            }));
+            
+            // Подобро разпределение на възлите в кръг или мрежа
+            const nodes = productArray.map((product, index) => {
+                const centerX = width / 2;
+                const centerY = height / 2;
+                const radius = Math.min(width, height) / 3;
+                const angle = (index / productArray.length) * 2 * Math.PI;
+                
+                return {
+                    id: product,
+                    x: centerX + Math.cos(angle) * radius,
+                    y: centerY + Math.sin(angle) * radius,
+                    emoji: getProductEmoji(product)
+                };
+            });
 
             // Връзки
             const links = [];
@@ -422,7 +427,7 @@
             });
 
             // Рисуване на възлите с ЕМОДЖИ
-            ctx.font = '30px Arial';
+            ctx.font = '24px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             
@@ -430,21 +435,21 @@
                 // Фон за емоджито
                 ctx.fillStyle = 'white';
                 ctx.beginPath();
-                ctx.arc(node.x, node.y, 25, 0, 2 * Math.PI);
+                ctx.arc(node.x, node.y, 30, 0, 2 * Math.PI);
                 ctx.fill();
                 ctx.strokeStyle = '#0D8BB1';
                 ctx.lineWidth = 2;
                 ctx.stroke();
 
-                // Емоджи
+                // Емоджи (малко по-големи)
                 ctx.fillStyle = 'black';
                 ctx.fillText(node.emoji, node.x, node.y);
 
-                // Име на продукта
-                ctx.font = '12px Arial';
+                // Име на продукта (по-близо)
+                ctx.font = '11px Arial';
                 ctx.fillStyle = '#333';
-                ctx.fillText(node.id, node.x, node.y + 40);
-                ctx.font = '30px Arial'; // Връщаме шрифта за следващото емоджи
+                ctx.fillText(node.id, node.x, node.y + 45);
+                ctx.font = '24px Arial'; // Връщаме шрифта за следващото емоджи
             });
 
             console.log('🎨 Мрежа нарисувана с емоджи');
@@ -542,4 +547,3 @@
         console.log('✅ 5. Емоджи продукти в мрежата');
     </script>
 </body>
-</html>
