@@ -438,7 +438,7 @@
     <div class="login-container" id="loginContainer">
         <div class="login-box">
             <h2>🔐 Вход в BI Системата</h2>
-            <form id="loginForm">
+            <div id="loginForm">
                 <div class="form-group">
                     <label for="username">Потребител:</label>
                     <input type="text" id="username" required>
@@ -447,8 +447,8 @@
                     <label for="password">Парола:</label>
                     <input type="password" id="password" required>
                 </div>
-                <button type="submit" class="login-btn">Вход</button>
-            </form>
+                <button type="button" class="login-btn" onclick="tryLogin()">Вход</button>
+            </div>
         </div>
     </div>
 
@@ -603,10 +603,20 @@
         let analysisResults = null;
 
         // Логин функционалност
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
+        document.addEventListener('DOMContentLoaded', function() {
+            // Позволяваме Enter key да задейства логина
+            document.getElementById('username').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') tryLogin();
+            });
+            
+            document.getElementById('password').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') tryLogin();
+            });
+        });
+        
+        function tryLogin() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
             
             if (username === 'admin' && password === 'admin123') {
                 document.getElementById('loginContainer').style.display = 'none';
@@ -615,7 +625,7 @@
             } else {
                 alert('Неправилно потребителско име или парола!');
             }
-        });
+        }
 
         function logout() {
             document.getElementById('loginContainer').style.display = 'flex';
@@ -639,7 +649,26 @@
         // РЕАЛЕН CSV АНАЛИЗ
         function handleFileUpload(event) {
             const file = event.target.files[0];
-            if (file) {
+
+            
+            if (!file) {
+
+                return;
+            }
+            
+            // Проверка на файловия тип
+            if (!file.name.toLowerCase().endsWith('.csv')) {
+                alert('Моля, изберете валиден CSV файл!');
+                return;
+            }
+            
+            // Проверка на размера (макс 10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                alert('Файлът е твърде голям! Максимален размер: 10MB');
+                return;
+            }
+            
+            try {
                 document.getElementById('fileName').textContent = `📄 Име: ${file.name}`;
                 document.getElementById('fileSize').textContent = `📏 Размер: ${(file.size / 1024).toFixed(2)} KB`;
                 document.getElementById('fileInfo').style.display = 'block';
@@ -647,14 +676,34 @@
                 // Показване на preview
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    const csv = e.target.result;
-                    const lines = csv.split('\n').filter(line => line.trim());
-                    const headers = lines[0].split(',').map(h => h.trim());
-                    
-                    document.getElementById('fileColumns').textContent = `📊 Колони: ${headers.length} (${headers.join(', ')})`;
-                    document.getElementById('fileRows').textContent = `📈 Записи: ${lines.length - 1}`;
+                    try {
+                        const csv = e.target.result;
+                        const lines = csv.split('\n').filter(line => line.trim());
+                        
+                        if (lines.length < 2) {
+                            alert('CSV файлът трябва да има поне 2 реда (заглавие + данни)');
+                            return;
+                        }
+                        
+                        const headers = lines[0].split(',').map(h => h.trim());
+                        
+                        document.getElementById('fileColumns').textContent = `📊 Колони: ${headers.length} (${headers.join(', ')})`;
+                        document.getElementById('fileRows').textContent = `📈 Записи: ${lines.length - 1}`;
+                        
+            
+                    } catch (error) {
+                        console.error('Грешка при четене на CSV:', error);
+                        alert('Грешка при четене на CSV файла. Моля, проверете формата!');
+                    }
+                };
+                reader.onerror = function() {
+                    console.error('Грешка при четене на файла');
+                    alert('Грешка при четене на файла!');
                 };
                 reader.readAsText(file);
+            } catch (error) {
+                console.error('Грешка в handleFileUpload:', error);
+                alert('Възникна неочаквана грешка!');
             }
         }
 
@@ -662,48 +711,130 @@
             const fileInput = document.getElementById('csvFile');
             const file = fileInput.files[0];
             
+
+            
             if (!file) {
                 alert('Моля, изберете CSV файл първо!');
                 return;
             }
 
-            // Показваме loading
-            document.getElementById('analysisLoading').style.display = 'block';
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                setTimeout(() => {
-                    const csv = e.target.result;
-                    analyzeCSVData(csv);
-                    document.getElementById('analysisLoading').style.display = 'none';
-                }, 2000); // Симулираме обработка
-            };
-            reader.readAsText(file);
+            // Проверка за валиден CSV файл
+            if (!file.name.toLowerCase().endsWith('.csv')) {
+                alert('Моля, изберете валиден CSV файл!');
+                return;
+            }
+
+            try {
+                // Показваме loading
+                const loadingElement = document.getElementById('analysisLoading');
+                if (loadingElement) {
+                    loadingElement.style.display = 'block';
+                }
+                
+
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+        
+                        setTimeout(() => {
+                            const csv = e.target.result;
+                            analyzeCSVData(csv);
+                            
+                            // Скриваме loading
+                            if (loadingElement) {
+                                loadingElement.style.display = 'none';
+                            }
+                        }, 1500); // Намалих от 2000 на 1500ms
+                    } catch (error) {
+                        console.error('Грешка при анализ на данните:', error);
+                        alert('Грешка при анализ на данните: ' + error.message);
+                        if (loadingElement) {
+                            loadingElement.style.display = 'none';
+                        }
+                    }
+                };
+                
+                reader.onerror = function() {
+                    console.error('Грешка при четене на файла');
+                    alert('Грешка при четене на файла!');
+                    if (loadingElement) {
+                        loadingElement.style.display = 'none';
+                    }
+                };
+                
+                reader.readAsText(file);
+            } catch (error) {
+                console.error('Грешка в processFile:', error);
+                alert('Възникна неочаквана грешка: ' + error.message);
+            }
         }
 
         function analyzeCSVData(csvText) {
-            const lines = csvText.split('\n').filter(line => line.trim());
-            const headers = lines[0].split(',').map(h => h.trim());
-            const rows = lines.slice(1).map(line => line.split(',').map(cell => cell.trim()));
+            try {
+    
+                
+                if (!csvText || csvText.trim() === '') {
+                    throw new Error('CSV файлът е празен!');
+                }
+                
+                const lines = csvText.split('\n').filter(line => line.trim());
+    
+                
+                if (lines.length < 2) {
+                    throw new Error('CSV файлът трябва да има поне 2 реда (заглавие + данни)');
+                }
+                
+                const headers = lines[0].split(',').map(h => h.trim());
+                const rows = lines.slice(1).map(line => line.split(',').map(cell => cell.trim()));
 
-            // Базови статистики
-            const rowCount = rows.length;
-            const columnCount = headers.length;
+    
+    
 
-            // Анализ на данните
-            const analysis = performDataAnalysis(headers, rows);
-            analysisResults = analysis;
+                // Базови статистики
+                const rowCount = rows.length;
+                const columnCount = headers.length;
 
-            // Показване на резултатите
-            showAnalysisResults(analysis, headers, rowCount, columnCount);
-            generateInsights(analysis);
-            generateRecommendations(analysis);
-            generateDashboard(analysis);
-            generateForecasting(analysis);
+                // Анализ на данните
+    
+                const analysis = performDataAnalysis(headers, rows);
+                analysisResults = analysis;
 
-            // Автоматично преминаване към анализ таб
-            showTab('analysis');
-            document.querySelector('[onclick="showTab(\'analysis\')"]').classList.add('active');
+                // Показване на резултатите
+    
+                showAnalysisResults(analysis, headers, rowCount, columnCount);
+                generateInsights(analysis);
+                generateRecommendations(analysis);
+                generateDashboard(analysis);
+                generateForecasting(analysis);
+
+                // Автоматично преминаване към анализ таб
+    
+                
+                // Деактивиране на всички табове
+                const allTabs = document.querySelectorAll('.tab-pane');
+                allTabs.forEach(tab => tab.classList.remove('active'));
+                
+                const allButtons = document.querySelectorAll('.tab-btn');
+                allButtons.forEach(btn => btn.classList.remove('active'));
+                
+                // Активиране на анализ таба
+                const analysisTab = document.getElementById('analysis');
+                const analysisButton = document.querySelector('[onclick*="analysis"]');
+                
+                if (analysisTab) {
+                    analysisTab.classList.add('active');
+                }
+                if (analysisButton) {
+                    analysisButton.classList.add('active');
+                }
+                
+    
+                
+            } catch (error) {
+                console.error('Грешка в analyzeCSVData:', error);
+                alert('Грешка при анализ на данните: ' + error.message);
+            }
         }
 
         function performDataAnalysis(headers, rows) {
@@ -1110,9 +1241,12 @@
             this.classList.remove('dragover');
             
             const files = e.dataTransfer.files;
-            if (files.length > 0 && files[0].type === 'text/csv') {
-                document.getElementById('csvFile').files = files;
+            if (files.length > 0 && files[0].name.toLowerCase().endsWith('.csv')) {
+                const fileInput = document.getElementById('csvFile');
+                fileInput.files = files;
                 handleFileUpload({target: {files: files}});
+            } else {
+                alert('Моля, качете валиден CSV файл!');
             }
         });
     </script>
