@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 DEBUG BI Система - Тестова версия 🚀</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0D8BB1 0%, #4A90A4 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .debug-panel {
+            background: #ffeb3b;
+            color: #333;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 2px solid #ffc107;
+        }
+
+        .debug-panel h3 {
+            color: #d32f2f;
+            margin-bottom: 10px;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 15px 10px;
+            text-align: center;
+            background: white;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+            min-width: 120px;
+        }
+
+        .tab-btn:hover {
+            background: #f8f9fa;
+        }
+
+        .tab-btn.active {
+            background: #0D8BB1;
+            color: white;
+            border-bottom-color: #065a75;
+        }
+
+        .tab-content {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            min-height: 600px;
+        }
+
+        .tab-pane {
+            display: none;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        .file-upload-area {
+            border: 3px dashed #0D8BB1;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .file-upload-area:hover {
+            background: #f0f9ff;
+            border-color: #065a75;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #0D8BB1;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .upload-subtext {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #0D8BB1 0%, #4A90A4 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(13, 139, 177, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+        }
+
+        .analysis-loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            background: #e8f4f8;
+            border-radius: 10px;
+            border: 2px solid #0D8BB1;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #0D8BB1;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .info-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .info-card h4 {
+            color: #0D8BB1;
+            margin-bottom: 10px;
+        }
+
+        .metric-card {
+            background: #e8f4f8;
+            border: 2px solid #0D8BB1;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        .metric-card h4 {
+            color: #0D8BB1;
+            margin-bottom: 8px;
+        }
+
+        #debugLog {
+            background: #000;
+            color: #00ff00;
+            padding: 10px;
+            border-radius: 5px;
+            height: 200px;
+            overflow-y: scroll;
+            font-family: monospace;
+            font-size: 12px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- DEBUG панел -->
+        <div class="debug-panel">
+            <h3>🐛 DEBUG РЕЖИМ АКТИВЕН</h3>
+            <p><strong>Цел:</strong> Тестване на функционалността за качване и анализ на файлове</p>
+            <p><strong>Тестов файл:</strong> test_data.csv (наличен в работното пространство)</p>
+            <button class="btn btn-warning" onclick="clearDebugLog()">🗑️ Изчисти лога</button>
+            <button class="btn btn-warning" onclick="testWithSampleData()">🧪 Тест с примерни данни</button>
+        </div>
+
+        <!-- Заглавие -->
+        <div class="header">
+            <h1>🚀 DEBUG BI Система за Анализ</h1>
+            <p>Тестова версия за дебъгване на проблема с анализа</p>
+        </div>
+
+        <!-- Навигационни табове -->
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="showTab('upload')">📁 Качване на данни</button>
+            <button class="tab-btn" onclick="showTab('analysis')">📊 Анализ на данни</button>
+            <button class="tab-btn" onclick="showTab('debug')">🐛 Debug лог</button>
+        </div>
+
+        <!-- Съдържание на табовете -->
+        <div class="tab-content">
+            <!-- Таб за качване на данни -->
+            <div class="tab-pane active" id="upload">
+                <h2>📁 Качване на CSV файл</h2>
+                <div class="file-upload-area" onclick="document.getElementById('csvFile').click()">
+                    <div class="upload-icon">📎</div>
+                    <div class="upload-text">Кликнете тук или плъзнете CSV файл</div>
+                    <div class="upload-subtext">Поддържани формати: .csv (макс. 10MB)</div>
+                    <input type="file" id="csvFile" class="file-input" accept=".csv" onchange="handleFileUpload(event)">
+                </div>
+                
+                <div class="analysis-loading" id="analysisLoading">
+                    <div class="spinner"></div>
+                    <h3>🔍 Анализирам данните...</h3>
+                    <p>Моля изчакайте, обработвам CSV файла</p>
+                </div>
+
+                <div id="fileInfo" style="display: none;">
+                    <h3>📊 Информация за файла:</h3>
+                    <div class="info-card">
+                        <p id="fileName"></p>
+                        <p id="fileSize"></p>
+                        <p id="fileColumns"></p>
+                        <p id="fileRows"></p>
+                    </div>
+                    <button class="btn btn-success" onclick="processFile()">⚡ Старт анализ</button>
+                </div>
+            </div>
+
+            <!-- Таб за анализ на данни -->
+            <div class="tab-pane" id="analysis">
+                <h2>📊 Резултати от анализа</h2>
+                <div id="dataPreview">
+                    <div class="info-card">
+                        <h4>💡 Съвет</h4>
+                        <p>Качете CSV файл от таба "Качване на данни", за да започнете анализа.</p>
+                    </div>
+                </div>
+                <div id="statisticsSection" style="display: none;">
+                    <h3>📈 Статистически анализ</h3>
+                    <div id="statistics"></div>
+                </div>
+            </div>
+
+            <!-- Таб за debug лог -->
+            <div class="tab-pane" id="debug">
+                <h2>🐛 Debug информация</h2>
+                <div class="info-card">
+                    <h4>📝 Debug лог</h4>
+                    <p>Тук се показват всички съобщения от системата за debug на проблеми:</p>
+                </div>
+                <div id="debugLog"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentData = null;
+        let analysisResults = null;
+
+        // Debug функционалност
+        function debugLog(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('debugLog');
+            logElement.innerHTML += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(`[DEBUG] ${message}`);
+        }
+
+        function clearDebugLog() {
+            document.getElementById('debugLog').innerHTML = '';
+            debugLog('Debug лог изчистен');
+        }
+
+        function testWithSampleData() {
+            debugLog('Започвам тест с примерни данни...');
+            const sampleCSV = `Продукт,Продажби,Печалба,Регион
+Лаптоп,15000,3000,София
+Телефон,8500,1700,Пловдив
+Таблет,5200,1040,Варна`;
+            
+            debugLog('Примерни данни създадени, започвам анализ...');
+            analyzeCSVData(sampleCSV);
+        }
+
+        // Функционалност за табове
+        function showTab(tabName) {
+            debugLog(`Преминаване към таб: ${tabName}`);
+            
+            const tabs = document.querySelectorAll('.tab-pane');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            const buttons = document.querySelectorAll('.tab-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            debugLog(`Таб ${tabName} активиран успешно`);
+        }
+
+        // РЕАЛЕН CSV АНАЛИЗ
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            debugLog(`Файл избран: ${file ? file.name : 'няма файл'}`);
+            
+            if (!file) {
+                debugLog('ГРЕШКА: Няма избран файл');
+                return;
+            }
+            
+            // Проверка на файловия тип
+            if (!file.name.toLowerCase().endsWith('.csv')) {
+                debugLog('ГРЕШКА: Файлът не е CSV формат');
+                alert('Моля, изберете валиден CSV файл!');
+                return;
+            }
+            
+            // Проверка на размера
+            if (file.size > 10 * 1024 * 1024) {
+                debugLog('ГРЕШКА: Файлът е твърде голям');
+                alert('Файлът е твърде голям! Максимален размер: 10MB');
+                return;
+            }
+            
+            try {
+                debugLog('Обновявам информацията за файла...');
+                document.getElementById('fileName').textContent = `📄 Име: ${file.name}`;
+                document.getElementById('fileSize').textContent = `📏 Размер: ${(file.size / 1024).toFixed(2)} KB`;
+                document.getElementById('fileInfo').style.display = 'block';
+                
+                debugLog('Започвам четене на файла за preview...');
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const csv = e.target.result;
+                        const lines = csv.split('\n').filter(line => line.trim());
+                        
+                        debugLog(`Намерени ${lines.length} линии в CSV`);
+                        
+                        if (lines.length < 2) {
+                            debugLog('ГРЕШКА: Твърде малко данни в CSV');
+                            alert('CSV файлът трябва да има поне 2 реда (заглавие + данни)');
+                            return;
+                        }
+                        
+                        const headers = lines[0].split(',').map(h => h.trim());
+                        debugLog(`Заглавия намерени: ${headers.join(', ')}`);
+                        
+                        document.getElementById('fileColumns').textContent = `📊 Колони: ${headers.length} (${headers.join(', ')})`;
+                        document.getElementById('fileRows').textContent = `📈 Записи: ${lines.length - 1}`;
+                        
+                        debugLog('Файл успешно зареден и анализиран за preview');
+                    } catch (error) {
+                        debugLog(`ГРЕШКА при четене на CSV: ${error.message}`);
+                        alert('Грешка при четене на CSV файла. Моля, проверете формата!');
+                    }
+                };
+                reader.onerror = function() {
+                    debugLog('ГРЕШКА при четене на файла от FileReader');
+                    alert('Грешка при четене на файла!');
+                };
+                reader.readAsText(file);
+            } catch (error) {
+                debugLog(`ГРЕШКА в handleFileUpload: ${error.message}`);
+                alert('Възникна неочаквана грешка!');
+            }
+        }
+
+        function processFile() {
+            const fileInput = document.getElementById('csvFile');
+            const file = fileInput.files[0];
+            
+            debugLog(`processFile извикана, файл: ${file ? file.name : 'няма файл'}`);
+            
+            if (!file) {
+                debugLog('ГРЕШКА: Няма файл за обработка');
+                alert('Моля, изберете CSV файл първо!');
+                return;
+            }
+
+            if (!file.name.toLowerCase().endsWith('.csv')) {
+                debugLog('ГРЕШКА: Файлът не е CSV при processFile');
+                alert('Моля, изберете валиден CSV файл!');
+                return;
+            }
+
+            try {
+                debugLog('Показвам loading индикатор...');
+                const loadingElement = document.getElementById('analysisLoading');
+                if (loadingElement) {
+                    loadingElement.style.display = 'block';
+                    debugLog('Loading показан успешно');
+                } else {
+                    debugLog('ГРЕШКА: Не мога да намеря loading елемента');
+                }
+                
+                debugLog('Започвам четене на файла за анализ...');
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        debugLog('Файлът е прочетен, подготвям анализ...');
+                        setTimeout(() => {
+                            debugLog('Започвам анализ на данните...');
+                            const csv = e.target.result;
+                            analyzeCSVData(csv);
+                            
+                            debugLog('Скривам loading индикатор...');
+                            if (loadingElement) {
+                                loadingElement.style.display = 'none';
+                            }
+                        }, 1000);
+                    } catch (error) {
+                        debugLog(`ГРЕШКА при анализ: ${error.message}`);
+                        alert('Грешка при анализ на данните: ' + error.message);
+                        if (loadingElement) {
+                            loadingElement.style.display = 'none';
+                        }
+                    }
+                };
+                
+                reader.onerror = function() {
+                    debugLog('ГРЕШКА при четене на файла в processFile');
+                    alert('Грешка при четене на файла!');
+                    if (loadingElement) {
+                        loadingElement.style.display = 'none';
+                    }
+                };
+                
+                reader.readAsText(file);
+            } catch (error) {
+                debugLog(`ГРЕШКА в processFile: ${error.message}`);
+                alert('Възникна неочаквана грешка: ' + error.message);
+            }
+        }
+
+        function analyzeCSVData(csvText) {
+            try {
+                debugLog('=== ЗАПОЧВАМ analyzeCSVData ===');
+                
+                if (!csvText || csvText.trim() === '') {
+                    throw new Error('CSV файлът е празен!');
+                }
+                
+                const lines = csvText.split('\n').filter(line => line.trim());
+                debugLog(`Намерени ${lines.length} линии в CSV`);
+                
+                if (lines.length < 2) {
+                    throw new Error('CSV файлът трябва да има поне 2 реда (заглавие + данни)');
+                }
+                
+                const headers = lines[0].split(',').map(h => h.trim());
+                const rows = lines.slice(1).map(line => line.split(',').map(cell => cell.trim()));
+
+                debugLog(`Заглавия: [${headers.join(', ')}]`);
+                debugLog(`Брой редове данни: ${rows.length}`);
+
+                const rowCount = rows.length;
+                const columnCount = headers.length;
+
+                debugLog('Извършвам анализ на данните...');
+                const analysis = performDataAnalysis(headers, rows);
+                analysisResults = analysis;
+
+                debugLog('Показвам резултатите...');
+                showAnalysisResults(analysis, headers, rowCount, columnCount);
+
+                debugLog('Преминавам към анализ таба...');
+                
+                // Деактивиране на всички табове
+                const allTabs = document.querySelectorAll('.tab-pane');
+                allTabs.forEach(tab => tab.classList.remove('active'));
+                
+                const allButtons = document.querySelectorAll('.tab-btn');
+                allButtons.forEach(btn => btn.classList.remove('active'));
+                
+                // Активиране на анализ таба
+                const analysisTab = document.getElementById('analysis');
+                const analysisButton = document.querySelector('[onclick*="analysis"]');
+                
+                if (analysisTab) {
+                    analysisTab.classList.add('active');
+                    debugLog('Анализ таб активиран');
+                } else {
+                    debugLog('ГРЕШКА: Не мога да намеря анализ таба');
+                }
+                
+                if (analysisButton) {
+                    analysisButton.classList.add('active');
+                    debugLog('Анализ бутон активиран');
+                } else {
+                    debugLog('ГРЕШКА: Не мога да намеря анализ бутона');
+                }
+                
+                debugLog('=== АНАЛИЗЪТ Е ЗАВЪРШЕН УСПЕШНО! ===');
+                
+            } catch (error) {
+                debugLog(`КРИТИЧНА ГРЕШКА в analyzeCSVData: ${error.message}`);
+                debugLog(`Stack trace: ${error.stack}`);
+                alert('Грешка при анализ на данните: ' + error.message);
+            }
+        }
+
+        function performDataAnalysis(headers, rows) {
+            debugLog('Започвам performDataAnalysis...');
+            
+            const analysis = {
+                totalRows: rows.length,
+                totalColumns: headers.length,
+                headers: headers,
+                statistics: {}
+            };
+
+            debugLog('Търся числови колони...');
+            const numericColumns = [];
+            headers.forEach((header, index) => {
+                const sample = rows.slice(0, Math.min(10, rows.length)).map(row => row[index]);
+                const numericValues = sample.filter(val => !isNaN(val) && val !== '');
+                if (numericValues.length > sample.length * 0.5) {
+                    const values = rows.map(row => parseFloat(row[index]) || 0);
+                    numericColumns.push({index, header, values});
+                    debugLog(`Числова колона намерена: ${header}`);
+                }
+            });
+
+            debugLog(`Намерени ${numericColumns.length} числови колони`);
+
+            // Статистики за числови колони
+            numericColumns.forEach(col => {
+                const values = col.values.filter(v => !isNaN(v) && v !== 0);
+                if (values.length > 0) {
+                    const sum = values.reduce((a, b) => a + b, 0);
+                    const avg = sum / values.length;
+                    const min = Math.min(...values);
+                    const max = Math.max(...values);
+                    
+                    analysis.statistics[col.header] = {
+                        sum: sum.toFixed(2),
+                        average: avg.toFixed(2),
+                        min: min.toFixed(2),
+                        max: max.toFixed(2),
+                        count: values.length
+                    };
+                    
+                    debugLog(`Статистики за ${col.header}: avg=${avg.toFixed(2)}, sum=${sum.toFixed(2)}`);
+                }
+            });
+
+            debugLog('performDataAnalysis завършен успешно');
+            return analysis;
+        }
+
+        function showAnalysisResults(analysis, headers, rowCount, columnCount) {
+            debugLog('Показвам резултатите от анализа...');
+            
+            const dataPreview = document.getElementById('dataPreview');
+            if (!dataPreview) {
+                debugLog('ГРЕШКА: Не мога да намеря dataPreview елемента');
+                return;
+            }
+            
+            let statisticsHTML = '<div class="info-card"><h4>📊 Анализ завършен успешно!</h4>';
+            statisticsHTML += `<p><strong>Общо записи:</strong> ${rowCount}</p>`;
+            statisticsHTML += `<p><strong>Колони:</strong> ${columnCount}</p>`;
+            statisticsHTML += `<p><strong>Заглавия:</strong> ${headers.join(', ')}</p></div>`;
+
+            // Статистики
+            if (Object.keys(analysis.statistics).length > 0) {
+                debugLog('Добавям статистически данни...');
+                statisticsHTML += '<h3>📈 Статистически данни</h3>';
+                Object.entries(analysis.statistics).forEach(([column, stats]) => {
+                    statisticsHTML += `
+                        <div class="metric-card">
+                            <h4>${column}</h4>
+                            <p><strong>Средно:</strong> ${stats.average}</p>
+                            <p><strong>Общо:</strong> ${stats.sum}</p>
+                            <p><strong>Мин:</strong> ${stats.min} | <strong>Макс:</strong> ${stats.max}</p>
+                            <p><strong>Брой валидни стойности:</strong> ${stats.count}</p>
+                        </div>
+                    `;
+                });
+            } else {
+                debugLog('Няма намерени числови данни за статистики');
+                statisticsHTML += '<div class="info-card"><h4>ℹ️ Информация</h4><p>Не са намерени числови колони за статистически анализ.</p></div>';
+            }
+
+            dataPreview.innerHTML = statisticsHTML;
+            document.getElementById('statisticsSection').style.display = 'block';
+            
+            debugLog('Резултатите са показани успешно!');
+        }
+
+        // Първоначално зареждане
+        document.addEventListener('DOMContentLoaded', function() {
+            debugLog('Страницата е заредена - DEBUG режим активен');
+            debugLog('Готов за тестване на функционалността за анализ на CSV файлове');
+        });
+    </script>
+</body>
+</html>
