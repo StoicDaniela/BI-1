@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stoic 11 • BI Manager</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #667eea;
+            --primary-light: #818cf8;
+            --primary-dark: #4338ca;
+            --secondary: #f472b6;
+            --accent: #06d6a0;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #06b6d4;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --gray: #64748b;
+            --gray-light: #94a3b8;
+            --border: #e2e8f0;
+            --white: #ffffff;
+            --gradient-main: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-accent: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-success: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            min-height: 100vh;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+            max-width: 1400px;
+            margin: 20px auto;
+            background: var(--white);
+            border-radius: 24px;
+            box-shadow: var(--shadow-xl);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Enhanced Sidebar */
+        .sidebar {
+            width: 300px;
+            background: linear-gradient(180deg, #1e293b 0%, #334155 50%, #475569 100%);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sidebar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" stroke-width="0.5" opacity="0.05"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>') repeat;
+            pointer-events: none;
+        }
+
+        .sidebar-header {
+            padding: 2rem;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(116, 75, 162, 0.3) 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            z-index: 1;
+        }
+
+        .sidebar-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: linear-gradient(135deg, #667eea, #f093fb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .sidebar-title i {
+            color: var(--accent);
+            font-size: 1.75rem;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+
+        .sidebar-subtitle {
+            font-size: 0.875rem;
+            opacity: 0.8;
+            font-weight: 500;
+            color: #e2e8f0;
+        }
+
+        .sidebar-section {
+            padding: 1.5rem 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .sidebar-title-small {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: rgba(255, 255, 255, 0.6);
+            padding: 0 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin-bottom: 0.25rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 2rem;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+            font-weight: 500;
+        }
+
+        .nav-link::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--gradient-main);
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            transform: translateX(8px);
+        }
+
+        .nav-link:hover::before,
+        .nav-link.active::before {
+            transform: scaleY(1);
+        }
+
+        .nav-link.active {
+            background: rgba(102, 126, 234, 0.2);
+            color: white;
+            transform: translateX(8px);
+        }
+
+        .nav-link i {
+            font-size: 1.1rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        .nav-badge {
+            background: var(--gradient-accent);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.25rem 0.5rem;
+            border-radius: 1rem;
+            margin-left: auto;
+            box-shadow: var(--shadow);
+        }
+
+        /* Enhanced Main Content */
+        .content-wrapper {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2.5rem;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        }
+
+        .content-section {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .page-header {
+            margin-bottom: 2.5rem;
+            text-align: center;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: var(--gradient-main);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-subtitle {
+            color: var(--gray);
+            font-size: 1.125rem;
+            font-weight: 400;
+        }
+
+        /* Enhanced Cards */
+        .card {
+            background: var(--white);
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .card-header {
+            padding: 2rem;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .card-title i {
+            color: var(--primary);
+        }
+
+        .card-body {
+            padding: 2rem;
+        }
+
+        /* Enhanced Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: var(--white);
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border: 1px solid var(--border);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-main);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .stat-card:nth-child(1)::before {
+            background: var(--gradient-main);
+        }
+
+        .stat-card:nth-child(2)::before {
+            background: var(--gradient-success);
+        }
+
+        .stat-card:nth-child(3)::before {
+            background: var(--gradient-accent);
+        }
+
+        .stat-card:nth-child(4)::before {
+            background: linear-gradient(135deg, #a78bfa 0%, #c084fc 100%);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            background: var(--gradient-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .stat-card:nth-child(1) .stat-icon {
+            background: var(--gradient-main);
+        }
+
+        .stat-card:nth-child(2) .stat-icon {
+            background: var(--gradient-success);
+        }
+
+        .stat-card:nth-child(3) .stat-icon {
+            background: var(--gradient-accent);
+        }
+
+        .stat-card:nth-child(4) .stat-icon {
+            background: linear-gradient(135deg, #a78bfa 0%, #c084fc 100%);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--gray);
+            font-weight: 500;
+        }
+
+        .stat-change {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            margin-top: 0.5rem;
+            display: inline-block;
+        }
+
+        /* Enhanced Action Grid */
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2.5rem;
+        }
+
+        .action-card {
+            background: var(--white);
+            border: 2px solid var(--border);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: left 0.5s;
+        }
+
+        .action-card:hover::before {
+            left: 100%;
+        }
+
+        .action-card:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow-xl);
+            transform: translateY(-5px);
+        }
+
+        .action-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            border-radius: 20px;
+            background: var(--gradient-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .action-title {
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 0.75rem;
+            font-size: 1.125rem;
+        }
+
+        .action-description {
+            font-size: 0.875rem;
+            color: var(--gray);
+            line-height: 1.5;
+        }
+
+        /* Enhanced Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            box-shadow: var(--shadow);
+        }
+
+        .btn-primary {
+            background: var(--gradient-main);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-secondary {
+            background: var(--white);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: var(--gradient-success);
+            color: white;
+        }
+
+        .btn-accent {
+            background: var(--gradient-accent);
+            color: white;
+        }
+
+        /* Enhanced Forms */
+        .form-group {
+            margin-bottom: 2rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 0.75rem;
+            font-size: 0.875rem;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: var(--white);
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+
+        /* Enhanced Quick Tags */
+        .quick-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin: 1.5rem 0;
+        }
+
+        .quick-tag {
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, var(--light) 0%, #f1f5f9 100%);
+            border: 2px solid var(--border);
+            border-radius: 25px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--dark);
+        }
+
+        .quick-tag:hover {
+            background: var(--gradient-main);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        /* Enhanced Table */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5rem;
+            background: var(--white);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .data-table th {
+            background: linear-gradient(135deg, var(--light) 0%, #f1f5f9 100%);
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .data-table tr:hover {
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        /* Enhanced Status Badges */
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 25px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-active {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .status-pending {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .status-completed {
+            background: rgba(102, 126, 234, 0.1);
+            color: var(--primary);
+        }
+
+        /* Enhanced Notifications */
+        .notification {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            background: var(--white);
+            border-radius: 16px;
+            box-shadow: var(--shadow-xl);
+            padding: 1.5rem;
+            border-left: 4px solid var(--success);
+            z-index: 1001;
+            min-width: 320px;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.4s ease;
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .notification.error {
+            border-left-color: var(--danger);
+        }
+
+        .notification.warning {
+            border-left-color: var(--warning);
+        }
+
+        /* Search Box */
+        .search-box {
+            position: relative;
+            max-width: 400px;
+            margin: 0 auto 2rem;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3rem;
+            border: 2px solid var(--border);
+            border-radius: 25px;
+            font-size: 1rem;
+            background: var(--white);
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray);
+            font-size: 1.125rem;
+        }
+
+        /* Footer */
+        .app-footer {
+            background: linear-gradient(135deg, var(--light) 0%, #e2e8f0 100%);
+            border-top: 1px solid var(--border);
+            padding: 1.5rem;
+            margin-top: auto;
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.875rem;
+            color: var(--gray);
+        }
+
+        .footer-brand {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .app-container {
+                margin: 10px;
+                border-radius: 20px;
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                min-height: auto;
+            }
+
+            .content-wrapper {
+                padding: 1.5rem;
+            }
+
+            .dashboard-grid,
+            .action-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .page-title {
+                font-size: 2rem;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Floating Action Button */
+        .fab {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 60px;
+            height: 60px;
+            background: var(--gradient-main);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: var(--shadow-xl);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .fab:hover {
+            transform: scale(1.1) translateY(-2px);
+            box-shadow: 0 20px 30px -5px rgba(102, 126, 234, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Enhanced Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">
+                    <i class="fas fa-chart-line"></i>
+                    STOIC 11
+                </div>
+                <div class="sidebar-subtitle">BI • Бизнес Разузнаване</div>
+            </div>
+            
+            <div class="sidebar-section">
+                <div class="sidebar-title-small">Основни</div>
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a href="#" class="nav-link active" onclick="showSection('dashboard', this)">
+                            <i class="fas fa-home"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" onclick="showSection('hypotheses', this)">
+                            <i class="fas fa-lightbulb"></i>
+                            Хипотези
+                            <span class="nav-badge">12</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" onclick="showSection('scenarios', this)">
+                            <i class="fas fa-sitemap"></i>
+                            Сценарии
+                            <span class="nav-badge">5</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" onclick="showSection('analysis', this)">
+                            <i class="fas fa-chart-bar"></i>
+                            Анализи
+                            <span class="nav-badge">8</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="sidebar-section">
+                <div class="sidebar-title-small">Инструменти</div>
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" onclick="showSection('reports', this)">
+                            <i class="fas fa-file-alt"></i>
+                            Доклади
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" onclick="showSection('data', this)">
+                            <i class="fas fa-database"></i>
+                            Данни
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" onclick="showSection('settings', this)">
+                            <i class="fas fa-cog"></i>
+                            Настройки
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Enhanced Main Content -->
+        <main class="content-wrapper">
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="content-section active">
+                <div class="page-header">
+                    <h1 class="page-title">🎯 Business Intelligence Dashboard</h1>
+                    <p class="page-subtitle">Преглед на ключовите показатели и текущи проекти</p>
+                </div>
+
+                <!-- Enhanced Statistics Grid -->
+                <div class="dashboard-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon">
+                                <i class="fas fa-lightbulb"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value">12</div>
+                        <div class="stat-label">Активни Хипотези</div>
+                        <div class="stat-change">↗ +2 този месец</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon">
+                                <i class="fas fa-sitemap"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value">5</div>
+                        <div class="stat-label">Сценарии в Процес</div>
+                        <div class="stat-change">↗ +1 тази седмица</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon">
+                                <i class="fas fa-chart-bar"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value">8</div>
+                        <div class="stat-label">Завършени Анализи</div>
+                        <div class="stat-change">↗ +3 този месец</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value">94%</div>
+                        <div class="stat-label">Успешност</div>
+                        <div class="stat-change">↗ +2% този месец</div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-rocket"></i>
+                            Бързи Действия
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="action-grid">
+                            <div class="action-card" onclick="showSection('hypotheses', document.querySelector('[onclick*=hypotheses]'))">
+                                <div class="action-icon">
+                                    <i class="fas fa-lightbulb"></i>
+                                </div>
+                                <div class="action-title">Създай Хипотеза</div>
+                                <div class="action-description">Започни нова бизнес хипотеза за тестване</div>
+                            </div>
+                            
+                            <div class="action-card" onclick="showSection('scenarios', document.querySelector('[onclick*=scenarios]'))">
+                                <div class="action-icon" style="background: var(--gradient-success);">
+                                    <i class="fas fa-sitemap"></i>
+                                </div>
+                                <div class="action-title">Нов Сценарий</div>
+                                <div class="action-description">Създай и анализирай бизнес сценарий</div>
+                            </div>
+                            
+                            <div class="action-card" onclick="showSection('analysis', document.querySelector('[onclick*=analysis]'))">
+                                <div class="action-icon" style="background: var(--gradient-accent);">
+                                    <i class="fas fa-chart-bar"></i>
+                                </div>
+                                <div class="action-title">Стартирай Анализ</div>
+                                <div class="action-description">Извърши детайлен бизнес анализ</div>
+                            </div>
+                            
+                            <div class="action-card" onclick="showSection('reports', document.querySelector('[onclick*=reports]'))">
+                                <div class="action-icon" style="background: linear-gradient(135deg, #a78bfa 0%, #c084fc 100%);">
+                                    <i class="fas fa-file-alt"></i>
+                                </div>
+                                <div class="action-title">Генерирай Доклад</div>
+                                <div class="action-description">Създай професионален BI доклад</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Hypotheses Section -->
+            <section id="hypotheses" class="content-section">
+                <div class="page-header">
+                    <h1 class="page-title">💡 Управление на Хипотези</h1>
+                    <p class="page-subtitle">Създавай, тествай и анализирай бизнес хипотези</p>
+                </div>
+
+                <div class="search-box">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" class="search-input" placeholder="Търси хипотези...">
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-plus"></i>
+                            Създай Нова Хипотеза
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        <form>
+                            <div class="form-group">
+                                <label class="form-label">Заглавие на хипотезата</label>
+                                <input type="text" class="form-input" placeholder="Напр. Увеличаване на продажбите с 15%">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Категория</label>
+                                <select class="form-select">
+                                    <option>Избери категория</option>
+                                    <option>Продажби</option>
+                                    <option>Маркетинг</option>
+                                    <option>Операции</option>
+                                    <option>Финанси</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Описание и метрики</label>
+                                <textarea class="form-textarea" rows="4" placeholder="Опиши хипотезата, очакваните резултати и начина за измерване..."></textarea>
+                            </div>
+
+                            <div class="quick-tags">
+                                <div class="quick-tag">Краткосрочна</div>
+                                <div class="quick-tag">Дългосрочна</div>
+                                <div class="quick-tag">Висок Приоритет</div>
+                                <div class="quick-tag">Лесна за тестване</div>
+                                <div class="quick-tag">Нужни ресурси</div>
+                                <div class="quick-tag">ROI фокус</div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i>
+                                Създай Хипотеза
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Existing Hypotheses -->
+                <div class="card" style="margin-top: 2rem;">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-list"></i>
+                            Текущи Хипотези
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Хипотеза</th>
+                                    <th>Категория</th>
+                                    <th>Статус</th>
+                                    <th>Приоритет</th>
+                                    <th>Дата</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Увеличаване на продажбите чрез онлайн канали</td>
+                                    <td>Продажби</td>
+                                    <td><span class="status-badge status-active">Активна</span></td>
+                                    <td>Висок</td>
+                                    <td>2025-09-28</td>
+                                </tr>
+                                <tr>
+                                    <td>Оптимизация на клиентския опит</td>
+                                    <td>Маркетинг</td>
+                                    <td><span class="status-badge status-pending">Тестване</span></td>
+                                    <td>Среден</td>
+                                    <td>2025-09-25</td>
+                                </tr>
+                                <tr>
+                                    <td>Автоматизация на процесите</td>
+                                    <td>Операции</td>
+                                    <td><span class="status-badge status-completed">Завършена</span></td>
+                                    <td>Висок</td>
+                                    <td>2025-09-20</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Scenarios Section -->
+            <section id="scenarios" class="content-section">
+                <div class="page-header">
+                    <h1 class="page-title">🎭 Анализ на Сценарии</h1>
+                    <p class="page-subtitle">Моделирай различни бизнес сценарии и тяхното въздействие</p>
+                </div>
+
+                <div class="search-box">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" class="search-input" placeholder="Търси сценарии...">
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-plus"></i>
+                            Създай Нов Сценарий
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        <form>
+                            <div class="form-group">
+                                <label class="form-label">Име на сценария</label>
+                                <input type="text" class="form-input" placeholder="Напр. Експанзия на нови пазари">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Тип сценарий</label>
+                                <select class="form-select">
+                                    <option>Избери тип</option>
+                                    <option>Оптимистичен</option>
+                                    <option>Реалистичен</option>
+                                    <option>Песимистичен</option>
+                                    <option>Стрес тест</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Описание и параметри</label>
+                                <textarea class="form-textarea" rows="4" placeholder="Опиши сценария, ключовите променливи и очакваните резултати..."></textarea>
+                            </div>
+
+                            <div class="quick-tags">
+                                <div class="quick-tag">Финансов модел</div>
+                                <div class="quick-tag">Пазарен анализ</div>
+                                <div class="quick-tag">Рискова оценка</div>
+                                <div class="quick-tag">ROI калкулация</div>
+                                <div class="quick-tag">Времева линия</div>
+                                <div class="quick-tag">Ресурси</div>
+                            </div>
+
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save"></i>
+                                Създай Сценарий
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Analysis Section -->
+            <section id="analysis" class="content-section">
+                <div class="page-header">
+                    <h1 class="page-title">📊 Бизнес Анализи</h1>
+                    <p class="page-subtitle">Извършвай дълбочинни анализи на данни и тенденции</p>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="action-card" style="border: 2px solid var(--primary);">
+                        <div class="action-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="action-title">Тенденции в Продажбите</div>
+                        <div class="action-description">Анализ на продажбите по месеци и региони</div>
+                    </div>
+                    
+                    <div class="action-card">
+                        <div class="action-icon" style="background: var(--gradient-success);">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="action-title">Клиентска Сегментация</div>
+                        <div class="action-description">Разпределение и поведение на клиентите</div>
+                    </div>
+                    
+                    <div class="action-card">
+                        <div class="action-icon" style="background: var(--gradient-accent);">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="action-title">Финансов Анализ</div>
+                        <div class="action-description">Рентабилност и разходна структура</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Reports Section -->
+            <section id="reports" class="content-section">
+                <div class="page-header">
+                    <h1 class="page-title">📄 Доклади и Визуализации</h1>
+                    <p class="page-subtitle">Генерирай професионални BI доклади</p>
+                </div>
+
+                <div class="action-grid">
+                    <div class="action-card">
+                        <div class="action-icon">
+                            <i class="fas fa-file-pdf"></i>
+                        </div>
+                        <div class="action-title">PDF Доклад</div>
+                        <div class="action-description">Генерирай детайлен PDF доклад</div>
+                    </div>
+                    
+                    <div class="action-card">
+                        <div class="action-icon" style="background: var(--gradient-success);">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                        <div class="action-title">Интерактивен Dashboard</div>
+                        <div class="action-description">Създай интерактивен дашборд</div>
+                    </div>
+                    
+                    <div class="action-card">
+                        <div class="action-icon" style="background: var(--gradient-accent);">
+                            <i class="fas fa-table"></i>
+                        </div>
+                        <div class="action-title">Excel Експорт</div>
+                        <div class="action-description">Изнеси данните в Excel формат</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Data Section -->
+            <section id="data" class="content-section">
+                <div class="page-header">
+                    <h1 class="page-title">🗃️ Управление на Данни</h1>
+                    <p class="page-subtitle">Импорт, обработка и валидация на данни</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-upload"></i>
+                            Импорт на Данни
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="action-grid">
+                            <div class="action-card">
+                                <div class="action-icon">
+                                    <i class="fas fa-file-csv"></i>
+                                </div>
+                                <div class="action-title">CSV Файлове</div>
+                                <div class="action-description">Качи CSV данни за анализ</div>
+                            </div>
+                            
+                            <div class="action-card">
+                                <div class="action-icon" style="background: var(--gradient-success);">
+                                    <i class="fas fa-database"></i>
+                                </div>
+                                <div class="action-title">База Данни</div>
+                                <div class="action-description">Свържи се с външна база</div>
+                            </div>
+                            
+                            <div class="action-card">
+                                <div class="action-icon" style="background: var(--gradient-accent);">
+                                    <i class="fas fa-cloud"></i>
+                                </div>
+                                <div class="action-title">Cloud Storage</div>
+                                <div class="action-description">Синхронизирай cloud данни</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="settings" class="content-section">
+                <div class="page-header">
+                    <h1 class="page-title">⚙️ Настройки</h1>
+                    <p class="page-subtitle">Конфигурирай приложението според нуждите ти</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-user"></i>
+                            Профил и Предпочитания
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        <form>
+                            <div class="form-group">
+                                <label class="form-label">Име на организацията</label>
+                                <input type="text" class="form-input" value="Stoic 11 LTD" readonly>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Email за нотификации</label>
+                                <input type="email" class="form-input" placeholder="your@email.com">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Език на интерфейса</label>
+                                <select class="form-select">
+                                    <option>Български</option>
+                                    <option>English</option>
+                                </select>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i>
+                                Запази Настройки
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Floating Action Button -->
+    <button class="fab" onclick="showAIAssistant()" title="AI Асистент">
+        <i class="fas fa-robot"></i>
+    </button>
+
+    <!-- Footer -->
+    <div class="app-footer">
+        <div class="footer-content">
+            <div class="footer-brand">Stoic 11 • BI Manager Professional</div>
+            <div>© 2025 Разработено от MiniMax Agent</div>
+        </div>
+    </div>
+
+    <script>
+        // Section Navigation
+        function showSection(sectionId, navElement) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Update navigation
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            if (navElement) {
+                navElement.classList.add('active');
+            }
+        }
+
+        // Quick Tags Interaction
+        document.addEventListener('DOMContentLoaded', function() {
+            const quickTags = document.querySelectorAll('.quick-tag');
+            
+            quickTags.forEach(tag => {
+                tag.addEventListener('click', function() {
+                    // Find the nearest textarea and append the tag text
+                    const form = this.closest('form');
+                    if (form) {
+                        const textarea = form.querySelector('.form-textarea');
+                        if (textarea) {
+                            const tagText = this.textContent;
+                            const currentValue = textarea.value;
+                            const newValue = currentValue ? currentValue + ' #' + tagText : '#' + tagText;
+                            textarea.value = newValue;
+                            
+                            // Visual feedback
+                            this.style.background = 'var(--gradient-main)';
+                            this.style.color = 'white';
+                            
+                            setTimeout(() => {
+                                this.style.background = '';
+                                this.style.color = '';
+                            }, 1000);
+                        }
+                    }
+                });
+            });
+        });
+
+        // Form Submission with Animation
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const submitBtn = this.querySelector('button[type="submit"]');
+                const originalText = submitBtn.innerHTML;
+                
+                // Show loading
+                submitBtn.innerHTML = '<div class="loading"></div> Запазва...';
+                submitBtn.disabled = true;
+                
+                // Simulate API call
+                setTimeout(() => {
+                    showNotification('Данните са запазени успешно!', 'success');
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                    
+                    // Reset form
+                    this.reset();
+                }, 2000);
+            });
+        });
+
+        // Notification System
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                    <div>
+                        <strong>${type === 'success' ? 'Успех!' : 'Внимание!'}</strong>
+                        <div style="margin-top: 0.25rem; font-size: 0.875rem;">${message}</div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Show notification
+            setTimeout(() => notification.classList.add('show'), 100);
+            
+            // Hide notification
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => document.body.removeChild(notification), 300);
+            }, 4000);
+        }
+
+        // AI Assistant Function
+        function showAIAssistant() {
+            showNotification('AI Асистентът ще бъде достъпен скоро! 🤖', 'info');
+        }
+
+        // Search Functionality
+        document.querySelectorAll('.search-input').forEach(input => {
+            input.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                // Add search logic here
+                console.log('Търсене за:', searchTerm);
+            });
+        });
+
+        // Animation on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animate stats cards
+            const statCards = document.querySelectorAll('.stat-card');
+            statCards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.transform = 'translateY(0)';
+                    card.style.opacity = '1';
+                }, index * 100);
+            });
+        });
+
+        // Initial stats animation setup
+        document.querySelectorAll('.stat-card').forEach(card => {
+            card.style.transform = 'translateY(20px)';
+            card.style.opacity = '0';
+            card.style.transition = 'all 0.5s ease';
+        });
+
+        // Welcome message
+        setTimeout(() => {
+            showNotification('Добре дошли в Stoic 11 BI Manager! 🎯', 'success');
+        }, 1000);
+    </script>
+</body>
+</html>
