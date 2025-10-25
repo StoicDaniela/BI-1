@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stoic 11 • BI Manager</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --primary: #667eea;
@@ -329,7 +331,7 @@
 
         .stat-header {
             display: flex;
-            justify-content: between;
+            justify-content: space-between;
             align-items: center;
             margin-bottom: 1.5rem;
         }
@@ -502,6 +504,11 @@
             color: white;
         }
 
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
         /* Enhanced Forms */
         .form-group {
             margin-bottom: 2rem;
@@ -559,6 +566,11 @@
             box-shadow: var(--shadow);
         }
 
+        .quick-tag.active {
+            background: var(--gradient-main);
+            color: white;
+        }
+
         /* Enhanced Table */
         .data-table {
             width: 100%;
@@ -612,6 +624,11 @@
             color: var(--primary);
         }
 
+        .status-draft {
+            background: rgba(100, 116, 139, 0.1);
+            color: var(--gray);
+        }
+
         /* Enhanced Notifications */
         .notification {
             position: fixed;
@@ -640,6 +657,10 @@
 
         .notification.warning {
             border-left-color: var(--warning);
+        }
+
+        .notification.info {
+            border-left-color: var(--info);
         }
 
         /* Search Box */
@@ -672,6 +693,106 @@
             transform: translateY(-50%);
             color: var(--gray);
             font-size: 1.125rem;
+        }
+
+        /* Charts Section */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .chart-card {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border);
+        }
+
+        .chart-card h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-xl);
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray);
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: var(--light);
+            color: var(--dark);
         }
 
         /* Footer */
@@ -713,11 +834,16 @@
             }
 
             .dashboard-grid,
-            .action-grid {
+            .action-grid,
+            .charts-grid {
                 grid-template-columns: 1fr;
             }
 
             .page-title {
+                font-size: 2rem;
+            }
+
+            .stat-value {
                 font-size: 2rem;
             }
         }
@@ -759,6 +885,36 @@
             transform: scale(1.1) translateY(-2px);
             box-shadow: 0 20px 30px -5px rgba(102, 126, 234, 0.4);
         }
+
+        /* Edit and Delete buttons */
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.75rem;
+            border-radius: 8px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--gray);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: var(--gray-light);
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
     </style>
 </head>
 <body>
@@ -786,18 +942,18 @@
                         <a href="#" class="nav-link" onclick="showSection('hypotheses', this)">
                             <i class="fas fa-lightbulb"></i>
                             Хипотези
-                            <span class="nav-badge">12</span>
+                            <span class="nav-badge" id="hypotheses-count">0</span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a href="#" class="nav-link" onclick="showSection('scenarios', this)">
                             <i class="fas fa-sitemap"></i>
                             Сценарии
-                            <span class="nav-badge">5</span>
+                            <span class="nav-badge" id="scenarios-count">0</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="#" class="nav-link" onclick="showSection('analysis', this)">
+                        <a href="#" class="nav-link" onclick="showSection('analytics', this)">
                             <i class="fas fa-chart-bar"></i>
                             Анализи
                             <span class="nav-badge">8</span>
@@ -848,9 +1004,9 @@
                                 <i class="fas fa-lightbulb"></i>
                             </div>
                         </div>
-                        <div class="stat-value">12</div>
+                        <div class="stat-value" id="active-hypotheses">0</div>
                         <div class="stat-label">Активни Хипотези</div>
-                        <div class="stat-change">↗ +2 този месец</div>
+                        <div class="stat-change" id="hypotheses-change">↗ +0 този месец</div>
                     </div>
                     
                     <div class="stat-card">
@@ -859,9 +1015,9 @@
                                 <i class="fas fa-sitemap"></i>
                             </div>
                         </div>
-                        <div class="stat-value">5</div>
+                        <div class="stat-value" id="active-scenarios">0</div>
                         <div class="stat-label">Сценарии в Процес</div>
-                        <div class="stat-change">↗ +1 тази седмица</div>
+                        <div class="stat-change" id="scenarios-change">↗ +0 тази седмица</div>
                     </div>
                     
                     <div class="stat-card">
@@ -870,9 +1026,9 @@
                                 <i class="fas fa-chart-bar"></i>
                             </div>
                         </div>
-                        <div class="stat-value">8</div>
+                        <div class="stat-value" id="completed-analyses">0</div>
                         <div class="stat-label">Завършени Анализи</div>
-                        <div class="stat-change">↗ +3 този месец</div>
+                        <div class="stat-change" id="analyses-change">↗ +0 този месец</div>
                     </div>
                     
                     <div class="stat-card">
@@ -881,9 +1037,9 @@
                                 <i class="fas fa-trophy"></i>
                             </div>
                         </div>
-                        <div class="stat-value">94%</div>
+                        <div class="stat-value" id="success-rate">0%</div>
                         <div class="stat-label">Успешност</div>
-                        <div class="stat-change">↗ +2% този месец</div>
+                        <div class="stat-change" id="success-change">↗ +0% този месец</div>
                     </div>
                 </div>
 
@@ -897,7 +1053,7 @@
                     </div>
                     <div class="card-body">
                         <div class="action-grid">
-                            <div class="action-card" onclick="showSection('hypotheses', document.querySelector('[onclick*=hypotheses]'))">
+                            <div class="action-card" onclick="openHypothesisModal()">
                                 <div class="action-icon">
                                     <i class="fas fa-lightbulb"></i>
                                 </div>
@@ -905,7 +1061,7 @@
                                 <div class="action-description">Започни нова бизнес хипотеза за тестване</div>
                             </div>
                             
-                            <div class="action-card" onclick="showSection('scenarios', document.querySelector('[onclick*=scenarios]'))">
+                            <div class="action-card" onclick="openScenarioModal()">
                                 <div class="action-icon" style="background: var(--gradient-success);">
                                     <i class="fas fa-sitemap"></i>
                                 </div>
@@ -913,7 +1069,7 @@
                                 <div class="action-description">Създай и анализирай бизнес сценарий</div>
                             </div>
                             
-                            <div class="action-card" onclick="showSection('analysis', document.querySelector('[onclick*=analysis]'))">
+                            <div class="action-card" onclick="showSection('analytics', document.querySelector('[onclick*=analytics]'))">
                                 <div class="action-icon" style="background: var(--gradient-accent);">
                                     <i class="fas fa-chart-bar"></i>
                                 </div>
@@ -942,10 +1098,10 @@
 
                 <div class="search-box">
                     <i class="fas fa-search search-icon"></i>
-                    <input type="text" class="search-input" placeholder="Търси хипотези...">
+                    <input type="text" class="search-input" placeholder="Търси хипотези..." id="hypothesis-search">
                 </div>
 
-                <div class="card">
+                <div class="card" style="margin-bottom: 2rem;">
                     <div class="card-header">
                         <h2 class="card-title">
                             <i class="fas fa-plus"></i>
@@ -953,35 +1109,47 @@
                         </h2>
                     </div>
                     <div class="card-body">
-                        <form>
+                        <form id="hypothesis-form">
                             <div class="form-group">
                                 <label class="form-label">Заглавие на хипотезата</label>
-                                <input type="text" class="form-input" placeholder="Напр. Увеличаване на продажбите с 15%">
+                                <input type="text" class="form-input" id="hypothesis-title" placeholder="Напр. Увеличаване на продажбите с 15%" required>
                             </div>
                             
                             <div class="form-group">
                                 <label class="form-label">Категория</label>
-                                <select class="form-select">
-                                    <option>Избери категория</option>
-                                    <option>Продажби</option>
-                                    <option>Маркетинг</option>
-                                    <option>Операции</option>
-                                    <option>Финанси</option>
+                                <select class="form-select" id="hypothesis-category" required>
+                                    <option value="">Избери категория</option>
+                                    <option value="Продажби">Продажби</option>
+                                    <option value="Маркетинг">Маркетинг</option>
+                                    <option value="Операции">Операции</option>
+                                    <option value="Финанси">Финанси</option>
+                                    <option value="ИТ">ИТ</option>
+                                    <option value="ЧР">Човешки ресурси</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Приоритет</label>
+                                <select class="form-select" id="hypothesis-priority" required>
+                                    <option value="">Избери приоритет</option>
+                                    <option value="Висок">Висок</option>
+                                    <option value="Среден">Среден</option>
+                                    <option value="Нисък">Нисък</option>
                                 </select>
                             </div>
 
                             <div class="form-group">
                                 <label class="form-label">Описание и метрики</label>
-                                <textarea class="form-textarea" rows="4" placeholder="Опиши хипотезата, очакваните резултати и начина за измерване..."></textarea>
+                                <textarea class="form-textarea" id="hypothesis-description" rows="4" placeholder="Опиши хипотезата, очакваните резултати и начина за измерване..."></textarea>
                             </div>
 
                             <div class="quick-tags">
-                                <div class="quick-tag">Краткосрочна</div>
-                                <div class="quick-tag">Дългосрочна</div>
-                                <div class="quick-tag">Висок Приоритет</div>
-                                <div class="quick-tag">Лесна за тестване</div>
-                                <div class="quick-tag">Нужни ресурси</div>
-                                <div class="quick-tag">ROI фокус</div>
+                                <div class="quick-tag" data-tag="Краткосрочна">Краткосрочна</div>
+                                <div class="quick-tag" data-tag="Дългосрочна">Дългосрочна</div>
+                                <div class="quick-tag" data-tag="Висок Приоритет">Висок Приоритет</div>
+                                <div class="quick-tag" data-tag="Лесна за тестване">Лесна за тестване</div>
+                                <div class="quick-tag" data-tag="Нужни ресурси">Нужни ресурси</div>
+                                <div class="quick-tag" data-tag="ROI фокус">ROI фокус</div>
                             </div>
 
                             <button type="submit" class="btn btn-primary">
@@ -993,7 +1161,7 @@
                 </div>
 
                 <!-- Existing Hypotheses -->
-                <div class="card" style="margin-top: 2rem;">
+                <div class="card">
                     <div class="card-header">
                         <h2 class="card-title">
                             <i class="fas fa-list"></i>
@@ -1001,40 +1169,13 @@
                         </h2>
                     </div>
                     <div class="card-body">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Хипотеза</th>
-                                    <th>Категория</th>
-                                    <th>Статус</th>
-                                    <th>Приоритет</th>
-                                    <th>Дата</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>Увеличаване на продажбите чрез онлайн канали</td>
-                                    <td>Продажби</td>
-                                    <td><span class="status-badge status-active">Активна</span></td>
-                                    <td>Висок</td>
-                                    <td>2025-09-28</td>
-                                </tr>
-                                <tr>
-                                    <td>Оптимизация на клиентския опит</td>
-                                    <td>Маркетинг</td>
-                                    <td><span class="status-badge status-pending">Тестване</span></td>
-                                    <td>Среден</td>
-                                    <td>2025-09-25</td>
-                                </tr>
-                                <tr>
-                                    <td>Автоматизация на процесите</td>
-                                    <td>Операции</td>
-                                    <td><span class="status-badge status-completed">Завършена</span></td>
-                                    <td>Висок</td>
-                                    <td>2025-09-20</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        <div id="hypotheses-list">
+                            <div class="empty-state">
+                                <i class="fas fa-lightbulb"></i>
+                                <h3>Няма създадени хипотези</h3>
+                                <p>Започни като създадеш първата си бизнес хипотеза!</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -1048,10 +1189,10 @@
 
                 <div class="search-box">
                     <i class="fas fa-search search-icon"></i>
-                    <input type="text" class="search-input" placeholder="Търси сценарии...">
+                    <input type="text" class="search-input" placeholder="Търси сценарии..." id="scenario-search">
                 </div>
 
-                <div class="card">
+                <div class="card" style="margin-bottom: 2rem;">
                     <div class="card-header">
                         <h2 class="card-title">
                             <i class="fas fa-plus"></i>
@@ -1059,35 +1200,47 @@
                         </h2>
                     </div>
                     <div class="card-body">
-                        <form>
+                        <form id="scenario-form">
                             <div class="form-group">
                                 <label class="form-label">Име на сценария</label>
-                                <input type="text" class="form-input" placeholder="Напр. Експанзия на нови пазари">
+                                <input type="text" class="form-input" id="scenario-title" placeholder="Напр. Експанзия на нови пазари" required>
                             </div>
                             
                             <div class="form-group">
                                 <label class="form-label">Тип сценарий</label>
-                                <select class="form-select">
-                                    <option>Избери тип</option>
-                                    <option>Оптимистичен</option>
-                                    <option>Реалистичен</option>
-                                    <option>Песимистичен</option>
-                                    <option>Стрес тест</option>
+                                <select class="form-select" id="scenario-type" required>
+                                    <option value="">Избери тип</option>
+                                    <option value="Оптимистичен">Оптимистичен</option>
+                                    <option value="Реалистичен">Реалистичен</option>
+                                    <option value="Песимистичен">Песимистичен</option>
+                                    <option value="Стрес тест">Стрес тест</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Категория</label>
+                                <select class="form-select" id="scenario-category" required>
+                                    <option value="">Избери категория</option>
+                                    <option value="Финансов">Финансов</option>
+                                    <option value="Пазарен">Пазарен</option>
+                                    <option value="Оперативен">Оперативен</option>
+                                    <option value="Стратегически">Стратегически</option>
+                                    <option value="Технологичен">Технологичен</option>
                                 </select>
                             </div>
 
                             <div class="form-group">
                                 <label class="form-label">Описание и параметри</label>
-                                <textarea class="form-textarea" rows="4" placeholder="Опиши сценария, ключовите променливи и очакваните резултати..."></textarea>
+                                <textarea class="form-textarea" id="scenario-description" rows="4" placeholder="Опиши сценария, ключовите променливи и очакваните резултати..."></textarea>
                             </div>
 
                             <div class="quick-tags">
-                                <div class="quick-tag">Финансов модел</div>
-                                <div class="quick-tag">Пазарен анализ</div>
-                                <div class="quick-tag">Рискова оценка</div>
-                                <div class="quick-tag">ROI калкулация</div>
-                                <div class="quick-tag">Времева линия</div>
-                                <div class="quick-tag">Ресурси</div>
+                                <div class="quick-tag" data-tag="Финансов модел">Финансов модел</div>
+                                <div class="quick-tag" data-tag="Пазарен анализ">Пазарен анализ</div>
+                                <div class="quick-tag" data-tag="Рискова оценка">Рискова оценка</div>
+                                <div class="quick-tag" data-tag="ROI калкулация">ROI калкулация</div>
+                                <div class="quick-tag" data-tag="Времева линия">Времева линия</div>
+                                <div class="quick-tag" data-tag="Ресурси">Ресурси</div>
                             </div>
 
                             <button type="submit" class="btn btn-success">
@@ -1097,38 +1250,61 @@
                         </form>
                     </div>
                 </div>
+
+                <!-- Existing Scenarios -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-list"></i>
+                            Текущи Сценарии
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        <div id="scenarios-list">
+                            <div class="empty-state">
+                                <i class="fas fa-sitemap"></i>
+                                <h3>Няма създадени сценарии</h3>
+                                <p>Започни като създадеш първия си бизнес сценарий!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </section>
 
-            <!-- Analysis Section -->
-            <section id="analysis" class="content-section">
+            <!-- Analytics Section -->
+            <section id="analytics" class="content-section">
                 <div class="page-header">
                     <h1 class="page-title">📊 Бизнес Анализи</h1>
                     <p class="page-subtitle">Извършвай дълбочинни анализи на данни и тенденции</p>
                 </div>
 
-                <div class="dashboard-grid">
-                    <div class="action-card" style="border: 2px solid var(--primary);">
-                        <div class="action-icon">
-                            <i class="fas fa-chart-line"></i>
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <h3>Статус на Хипотезите</h3>
+                        <div class="chart-container">
+                            <canvas id="hypotheses-chart"></canvas>
                         </div>
-                        <div class="action-title">Тенденции в Продажбите</div>
-                        <div class="action-description">Анализ на продажбите по месеци и региони</div>
                     </div>
                     
-                    <div class="action-card">
-                        <div class="action-icon" style="background: var(--gradient-success);">
-                            <i class="fas fa-users"></i>
+                    <div class="chart-card">
+                        <h3>Типове Сценарии</h3>
+                        <div class="chart-container">
+                            <canvas id="scenarios-chart"></canvas>
                         </div>
-                        <div class="action-title">Клиентска Сегментация</div>
-                        <div class="action-description">Разпределение и поведение на клиентите</div>
                     </div>
                     
-                    <div class="action-card">
-                        <div class="action-icon" style="background: var(--gradient-accent);">
-                            <i class="fas fa-dollar-sign"></i>
+                    <div class="chart-card">
+                        <h3>Категории</h3>
+                        <div class="chart-container">
+                            <canvas id="categories-chart"></canvas>
                         </div>
-                        <div class="action-title">Финансов Анализ</div>
-                        <div class="action-description">Рентабилност и разходна структура</div>
+                    </div>
+                    
+                    <div class="chart-card">
+                        <h3>Времева Тенденция</h3>
+                        <div class="chart-container">
+                            <canvas id="timeline-chart"></canvas>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -1141,7 +1317,7 @@
                 </div>
 
                 <div class="action-grid">
-                    <div class="action-card">
+                    <div class="action-card" onclick="generatePDFReport()">
                         <div class="action-icon">
                             <i class="fas fa-file-pdf"></i>
                         </div>
@@ -1149,20 +1325,20 @@
                         <div class="action-description">Генерирай детайлен PDF доклад</div>
                     </div>
                     
-                    <div class="action-card">
+                    <div class="action-card" onclick="generateExcelReport()">
                         <div class="action-icon" style="background: var(--gradient-success);">
-                            <i class="fas fa-chart-pie"></i>
-                        </div>
-                        <div class="action-title">Интерактивен Dashboard</div>
-                        <div class="action-description">Създай интерактивен дашборд</div>
-                    </div>
-                    
-                    <div class="action-card">
-                        <div class="action-icon" style="background: var(--gradient-accent);">
                             <i class="fas fa-table"></i>
                         </div>
                         <div class="action-title">Excel Експорт</div>
                         <div class="action-description">Изнеси данните в Excel формат</div>
+                    </div>
+                    
+                    <div class="action-card" onclick="generateDashboardReport()">
+                        <div class="action-icon" style="background: var(--gradient-accent);">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                        <div class="action-title">Dashboard Доклад</div>
+                        <div class="action-description">Интерактивен dashboard доклад</div>
                     </div>
                 </div>
             </section>
@@ -1183,7 +1359,7 @@
                     </div>
                     <div class="card-body">
                         <div class="action-grid">
-                            <div class="action-card">
+                            <div class="action-card" onclick="importCSV()">
                                 <div class="action-icon">
                                     <i class="fas fa-file-csv"></i>
                                 </div>
@@ -1191,7 +1367,7 @@
                                 <div class="action-description">Качи CSV данни за анализ</div>
                             </div>
                             
-                            <div class="action-card">
+                            <div class="action-card" onclick="showNotification('API интеграцията ще бъде достъпна скоро!', 'info')">
                                 <div class="action-icon" style="background: var(--gradient-success);">
                                     <i class="fas fa-database"></i>
                                 </div>
@@ -1199,7 +1375,7 @@
                                 <div class="action-description">Свържи се с външна база</div>
                             </div>
                             
-                            <div class="action-card">
+                            <div class="action-card" onclick="showNotification('Cloud интеграцията ще бъде достъпна скоро!', 'info')">
                                 <div class="action-icon" style="background: var(--gradient-accent);">
                                     <i class="fas fa-cloud"></i>
                                 </div>
@@ -1226,22 +1402,31 @@
                         </h2>
                     </div>
                     <div class="card-body">
-                        <form>
+                        <form id="settings-form">
                             <div class="form-group">
                                 <label class="form-label">Име на организацията</label>
-                                <input type="text" class="form-input" value="Stoic 11 LTD" readonly>
+                                <input type="text" class="form-input" id="org-name" value="Stoic 11 LTD" readonly>
                             </div>
                             
                             <div class="form-group">
                                 <label class="form-label">Email за нотификации</label>
-                                <input type="email" class="form-input" placeholder="your@email.com">
+                                <input type="email" class="form-input" id="notification-email" placeholder="your@email.com">
                             </div>
                             
                             <div class="form-group">
                                 <label class="form-label">Език на интерфейса</label>
-                                <select class="form-select">
-                                    <option>Български</option>
-                                    <option>English</option>
+                                <select class="form-select" id="interface-language">
+                                    <option value="bg">Български</option>
+                                    <option value="en">English</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Тема</label>
+                                <select class="form-select" id="theme">
+                                    <option value="default">Основна</option>
+                                    <option value="dark">Тъмна</option>
+                                    <option value="light">Светла</option>
                                 </select>
                             </div>
 
@@ -1252,8 +1437,145 @@
                         </form>
                     </div>
                 </div>
+
+                <div class="card" style="margin-top: 2rem;">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-database"></i>
+                            Управление на Данни
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="action-grid">
+                            <div class="action-card" onclick="exportData()">
+                                <div class="action-icon">
+                                    <i class="fas fa-download"></i>
+                                </div>
+                                <div class="action-title">Експорт на Данни</div>
+                                <div class="action-description">Изтегли всички данни</div>
+                            </div>
+                            
+                            <div class="action-card" onclick="clearData()" style="border-color: var(--danger);">
+                                <div class="action-icon" style="background: var(--danger);">
+                                    <i class="fas fa-trash"></i>
+                                </div>
+                                <div class="action-title">Изчисти Данните</div>
+                                <div class="action-description" style="color: var(--danger);">Изтрий всички данни</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </section>
         </main>
+    </div>
+
+    <!-- Hypothesis Modal -->
+    <div id="hypothesis-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="hypothesis-modal-title">Редактирай Хипотеза</h3>
+                <button class="modal-close" onclick="closeModal('hypothesis-modal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="hypothesis-edit-form">
+                <input type="hidden" id="edit-hypothesis-id">
+                <div class="form-group">
+                    <label class="form-label">Заглавие</label>
+                    <input type="text" class="form-input" id="edit-hypothesis-title" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Категория</label>
+                    <select class="form-select" id="edit-hypothesis-category" required>
+                        <option value="Продажби">Продажби</option>
+                        <option value="Маркетинг">Маркетинг</option>
+                        <option value="Операции">Операции</option>
+                        <option value="Финанси">Финанси</option>
+                        <option value="ИТ">ИТ</option>
+                        <option value="ЧР">Човешки ресурси</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Приоритет</label>
+                    <select class="form-select" id="edit-hypothesis-priority" required>
+                        <option value="Висок">Висок</option>
+                        <option value="Среден">Среден</option>
+                        <option value="Нисък">Нисък</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Статус</label>
+                    <select class="form-select" id="edit-hypothesis-status" required>
+                        <option value="Чернова">Чернова</option>
+                        <option value="Активна">Активна</option>
+                        <option value="Тестване">Тестване</option>
+                        <option value="Завършена">Завършена</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Описание</label>
+                    <textarea class="form-textarea" id="edit-hypothesis-description" rows="3"></textarea>
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('hypothesis-modal')">Отказ</button>
+                    <button type="submit" class="btn btn-primary">Запази</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scenario Modal -->
+    <div id="scenario-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="scenario-modal-title">Редактирай Сценарий</h3>
+                <button class="modal-close" onclick="closeModal('scenario-modal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="scenario-edit-form">
+                <input type="hidden" id="edit-scenario-id">
+                <div class="form-group">
+                    <label class="form-label">Заглавие</label>
+                    <input type="text" class="form-input" id="edit-scenario-title" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Тип</label>
+                    <select class="form-select" id="edit-scenario-type" required>
+                        <option value="Оптимистичен">Оптимистичен</option>
+                        <option value="Реалистичен">Реалистичен</option>
+                        <option value="Песимистичен">Песимистичен</option>
+                        <option value="Стрес тест">Стрес тест</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Категория</label>
+                    <select class="form-select" id="edit-scenario-category" required>
+                        <option value="Финансов">Финансов</option>
+                        <option value="Пазарен">Пазарен</option>
+                        <option value="Оперативен">Оперативен</option>
+                        <option value="Стратегически">Стратегически</option>
+                        <option value="Технологичен">Технологичен</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Статус</label>
+                    <select class="form-select" id="edit-scenario-status" required>
+                        <option value="Чернова">Чернова</option>
+                        <option value="В процес">В процес</option>
+                        <option value="Завършен">Завършен</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Описание</label>
+                    <textarea class="form-textarea" id="edit-scenario-description" rows="3"></textarea>
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('scenario-modal')">Отказ</button>
+                    <button type="submit" class="btn btn-success">Запази</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- Floating Action Button -->
@@ -1270,6 +1592,25 @@
     </div>
 
     <script>
+        // Global variables
+        let hypotheses = [];
+        let scenarios = [];
+        let charts = {};
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            updateDashboard();
+            renderHypothesesList();
+            renderScenariosList();
+            initializeCharts();
+            
+            // Show welcome message
+            setTimeout(() => {
+                showNotification('Добре дошли в Stoic 11 BI Manager! 🎯', 'success');
+            }, 1000);
+        });
+
         // Section Navigation
         function showSection(sectionId, navElement) {
             // Hide all sections
@@ -1288,61 +1629,719 @@
             if (navElement) {
                 navElement.classList.add('active');
             }
+
+            // Refresh charts if analytics section
+            if (sectionId === 'analytics') {
+                setTimeout(() => updateCharts(), 100);
+            }
+        }
+
+        // Data Management
+        function loadData() {
+            const storedHypotheses = localStorage.getItem('hypotheses');
+            const storedScenarios = localStorage.getItem('scenarios');
+            
+            if (storedHypotheses) {
+                hypotheses = JSON.parse(storedHypotheses);
+            }
+            
+            if (storedScenarios) {
+                scenarios = JSON.parse(storedScenarios);
+            }
+
+            // Add sample data if none exists
+            if (hypotheses.length === 0) {
+                hypotheses = [
+                    {
+                        id: Date.now() + 1,
+                        title: "Увеличаване на продажбите чрез онлайн канали",
+                        category: "Продажби",
+                        priority: "Висок",
+                        status: "Активна",
+                        description: "Тестване на различни дигитални канали за увеличаване на продажбите с 15%",
+                        createdAt: new Date().toISOString(),
+                        tags: ["Краткосрочна", "ROI фокус"]
+                    }
+                ];
+                localStorage.setItem('hypotheses', JSON.stringify(hypotheses));
+            }
+
+            if (scenarios.length === 0) {
+                scenarios = [
+                    {
+                        id: Date.now() + 1,
+                        title: "Експанзия на нови пазари",
+                        type: "Оптимистичен",
+                        category: "Пазарен",
+                        status: "В процес",
+                        description: "Анализ на възможностите за навлизане на нови пазари в Източна Европа",
+                        createdAt: new Date().toISOString(),
+                        tags: ["Пазарен анализ", "Ресурси"]
+                    }
+                ];
+                localStorage.setItem('scenarios', JSON.stringify(scenarios));
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('hypotheses', JSON.stringify(hypotheses));
+            localStorage.setItem('scenarios', JSON.stringify(scenarios));
+        }
+
+        // Dashboard Updates
+        function updateDashboard() {
+            const activeHypotheses = hypotheses.filter(h => h.status === 'Активна').length;
+            const activeScenarios = scenarios.filter(s => s.status === 'В процес').length;
+            const completedHypotheses = hypotheses.filter(h => h.status === 'Завършена').length;
+            const totalItems = hypotheses.length + scenarios.length;
+            const successRate = totalItems > 0 ? Math.round((completedHypotheses / totalItems) * 100) : 0;
+
+            document.getElementById('active-hypotheses').textContent = activeHypotheses;
+            document.getElementById('active-scenarios').textContent = activeScenarios;
+            document.getElementById('completed-analyses').textContent = completedHypotheses;
+            document.getElementById('success-rate').textContent = successRate + '%';
+
+            // Update counts in sidebar
+            document.getElementById('hypotheses-count').textContent = hypotheses.length;
+            document.getElementById('scenarios-count').textContent = scenarios.length;
+
+            // Update changes
+            document.getElementById('hypotheses-change').textContent = `↗ +${hypotheses.length} този месец`;
+            document.getElementById('scenarios-change').textContent = `↗ +${scenarios.length} тази седмица`;
+            document.getElementById('analyses-change').textContent = `↗ +${completedHypotheses} този месец`;
+            document.getElementById('success-change').textContent = `↗ +${successRate}% този месец`;
+        }
+
+        // Hypotheses Management
+        document.getElementById('hypothesis-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const title = document.getElementById('hypothesis-title').value;
+            const category = document.getElementById('hypothesis-category').value;
+            const priority = document.getElementById('hypothesis-priority').value;
+            const description = document.getElementById('hypothesis-description').value;
+            
+            const selectedTags = Array.from(document.querySelectorAll('.quick-tag.active')).map(tag => tag.dataset.tag);
+            
+            const hypothesis = {
+                id: Date.now(),
+                title,
+                category,
+                priority,
+                status: 'Чернова',
+                description,
+                createdAt: new Date().toISOString(),
+                tags: selectedTags
+            };
+            
+            hypotheses.push(hypothesis);
+            saveData();
+            updateDashboard();
+            renderHypothesesList();
+            
+            // Reset form
+            this.reset();
+            document.querySelectorAll('.quick-tag').forEach(tag => tag.classList.remove('active'));
+            
+            showNotification('Хипотезата е създадена успешно!', 'success');
+        });
+
+        function renderHypothesesList() {
+            const container = document.getElementById('hypotheses-list');
+            const searchTerm = document.getElementById('hypothesis-search').value.toLowerCase();
+            
+            const filteredHypotheses = hypotheses.filter(h => 
+                h.title.toLowerCase().includes(searchTerm) ||
+                h.category.toLowerCase().includes(searchTerm) ||
+                h.priority.toLowerCase().includes(searchTerm)
+            );
+            
+            if (filteredHypotheses.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-lightbulb"></i>
+                        <h3>Няма намерени хипотези</h3>
+                        <p>Опитай с друга дума за търсене или създай нова хипотеза!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const table = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Заглавие</th>
+                            <th>Категория</th>
+                            <th>Статус</th>
+                            <th>Приоритет</th>
+                            <th>Дата</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filteredHypotheses.map(hypothesis => `
+                            <tr>
+                                <td><strong>${hypothesis.title}</strong></td>
+                                <td>${hypothesis.category}</td>
+                                <td><span class="status-badge status-${hypothesis.status.toLowerCase()}">${hypothesis.status}</span></td>
+                                <td>${hypothesis.priority}</td>
+                                <td>${new Date(hypothesis.createdAt).toLocaleDateString('bg-BG')}</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-primary btn-sm" onclick="editHypothesis(${hypothesis.id})">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-danger btn-sm" onclick="deleteHypothesis(${hypothesis.id})">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            container.innerHTML = table;
+        }
+
+        // Scenarios Management
+        document.getElementById('scenario-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const title = document.getElementById('scenario-title').value;
+            const type = document.getElementById('scenario-type').value;
+            const category = document.getElementById('scenario-category').value;
+            const description = document.getElementById('scenario-description').value;
+            
+            const selectedTags = Array.from(document.querySelectorAll('.quick-tag.active')).map(tag => tag.dataset.tag);
+            
+            const scenario = {
+                id: Date.now(),
+                title,
+                type,
+                category,
+                status: 'Чернова',
+                description,
+                createdAt: new Date().toISOString(),
+                tags: selectedTags
+            };
+            
+            scenarios.push(scenario);
+            saveData();
+            updateDashboard();
+            renderScenariosList();
+            
+            // Reset form
+            this.reset();
+            document.querySelectorAll('.quick-tag').forEach(tag => tag.classList.remove('active'));
+            
+            showNotification('Сценарият е създаден успешно!', 'success');
+        });
+
+        function renderScenariosList() {
+            const container = document.getElementById('scenarios-list');
+            const searchTerm = document.getElementById('scenario-search').value.toLowerCase();
+            
+            const filteredScenarios = scenarios.filter(s => 
+                s.title.toLowerCase().includes(searchTerm) ||
+                s.type.toLowerCase().includes(searchTerm) ||
+                s.category.toLowerCase().includes(searchTerm)
+            );
+            
+            if (filteredScenarios.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-sitemap"></i>
+                        <h3>Няма намерени сценарии</h3>
+                        <p>Опитай с друга дума за търсене или създай нов сценарий!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const table = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Заглавие</th>
+                            <th>Тип</th>
+                            <th>Категория</th>
+                            <th>Статус</th>
+                            <th>Дата</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filteredScenarios.map(scenario => `
+                            <tr>
+                                <td><strong>${scenario.title}</strong></td>
+                                <td>${scenario.type}</td>
+                                <td>${scenario.category}</td>
+                                <td><span class="status-badge status-${scenario.status.toLowerCase()}">${scenario.status}</span></td>
+                                <td>${new Date(scenario.createdAt).toLocaleDateString('bg-BG')}</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-success btn-sm" onclick="editScenario(${scenario.id})">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-danger btn-sm" onclick="deleteScenario(${scenario.id})">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            container.innerHTML = table;
         }
 
         // Quick Tags Interaction
-        document.addEventListener('DOMContentLoaded', function() {
-            const quickTags = document.querySelectorAll('.quick-tag');
-            
-            quickTags.forEach(tag => {
-                tag.addEventListener('click', function() {
-                    // Find the nearest textarea and append the tag text
-                    const form = this.closest('form');
-                    if (form) {
-                        const textarea = form.querySelector('.form-textarea');
-                        if (textarea) {
-                            const tagText = this.textContent;
-                            const currentValue = textarea.value;
-                            const newValue = currentValue ? currentValue + ' #' + tagText : '#' + tagText;
-                            textarea.value = newValue;
-                            
-                            // Visual feedback
-                            this.style.background = 'var(--gradient-main)';
-                            this.style.color = 'white';
-                            
-                            setTimeout(() => {
-                                this.style.background = '';
-                                this.style.color = '';
-                            }, 1000);
-                        }
-                    }
-                });
+        document.querySelectorAll('.quick-tag').forEach(tag => {
+            tag.addEventListener('click', function() {
+                this.classList.toggle('active');
             });
         });
 
-        // Form Submission with Animation
-        document.querySelectorAll('form').forEach(form => {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
+        // Search functionality
+        document.getElementById('hypothesis-search').addEventListener('input', renderHypothesesList);
+        document.getElementById('scenario-search').addEventListener('input', renderScenariosList);
+
+        // Modal Functions
+        function openHypothesisModal() {
+            showSection('hypotheses', document.querySelector('[onclick*="hypotheses"]'));
+        }
+
+        function openScenarioModal() {
+            showSection('scenarios', document.querySelector('[onclick*="scenarios"]'));
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+        }
+
+        // Edit/Delete Functions
+        function editHypothesis(id) {
+            const hypothesis = hypotheses.find(h => h.id === id);
+            if (!hypothesis) return;
+
+            document.getElementById('edit-hypothesis-id').value = hypothesis.id;
+            document.getElementById('edit-hypothesis-title').value = hypothesis.title;
+            document.getElementById('edit-hypothesis-category').value = hypothesis.category;
+            document.getElementById('edit-hypothesis-priority').value = hypothesis.priority;
+            document.getElementById('edit-hypothesis-status').value = hypothesis.status;
+            document.getElementById('edit-hypothesis-description').value = hypothesis.description;
+            
+            document.getElementById('hypothesis-modal-title').textContent = 'Редактирай Хипотеза';
+            document.getElementById('hypothesis-modal').classList.add('show');
+        }
+
+        function editScenario(id) {
+            const scenario = scenarios.find(s => s.id === id);
+            if (!scenario) return;
+
+            document.getElementById('edit-scenario-id').value = scenario.id;
+            document.getElementById('edit-scenario-title').value = scenario.title;
+            document.getElementById('edit-scenario-type').value = scenario.type;
+            document.getElementById('edit-scenario-category').value = scenario.category;
+            document.getElementById('edit-scenario-status').value = scenario.status;
+            document.getElementById('edit-scenario-description').value = scenario.description;
+            
+            document.getElementById('scenario-modal-title').textContent = 'Редактирай Сценарий';
+            document.getElementById('scenario-modal').classList.add('show');
+        }
+
+        function deleteHypothesis(id) {
+            if (confirm('Сигурен ли си, че искаш да изтриеш тази хипотеза?')) {
+                hypotheses = hypotheses.filter(h => h.id !== id);
+                saveData();
+                updateDashboard();
+                renderHypothesesList();
+                showNotification('Хипотезата е изтрита!', 'success');
+            }
+        }
+
+        function deleteScenario(id) {
+            if (confirm('Сигурен ли си, че искаш да изтриеш този сценарий?')) {
+                scenarios = scenarios.filter(s => s.id !== id);
+                saveData();
+                updateDashboard();
+                renderScenariosList();
+                showNotification('Сценарият е изтрит!', 'success');
+            }
+        }
+
+        // Edit Forms
+        document.getElementById('hypothesis-edit-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const id = parseInt(document.getElementById('edit-hypothesis-id').value);
+            const hypothesis = hypotheses.find(h => h.id === id);
+            
+            if (hypothesis) {
+                hypothesis.title = document.getElementById('edit-hypothesis-title').value;
+                hypothesis.category = document.getElementById('edit-hypothesis-category').value;
+                hypothesis.priority = document.getElementById('edit-hypothesis-priority').value;
+                hypothesis.status = document.getElementById('edit-hypothesis-status').value;
+                hypothesis.description = document.getElementById('edit-hypothesis-description').value;
                 
-                const submitBtn = this.querySelector('button[type="submit"]');
-                const originalText = submitBtn.innerHTML;
-                
-                // Show loading
-                submitBtn.innerHTML = '<div class="loading"></div> Запазва...';
-                submitBtn.disabled = true;
-                
-                // Simulate API call
-                setTimeout(() => {
-                    showNotification('Данните са запазени успешно!', 'success');
-                    submitBtn.innerHTML = originalText;
-                    submitBtn.disabled = false;
-                    
-                    // Reset form
-                    this.reset();
-                }, 2000);
-            });
+                saveData();
+                updateDashboard();
+                renderHypothesesList();
+                closeModal('hypothesis-modal');
+                showNotification('Хипотезата е актуализирана!', 'success');
+            }
         });
+
+        document.getElementById('scenario-edit-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const id = parseInt(document.getElementById('edit-scenario-id').value);
+            const scenario = scenarios.find(s => s.id === id);
+            
+            if (scenario) {
+                scenario.title = document.getElementById('edit-scenario-title').value;
+                scenario.type = document.getElementById('edit-scenario-type').value;
+                scenario.category = document.getElementById('edit-scenario-category').value;
+                scenario.status = document.getElementById('edit-scenario-status').value;
+                scenario.description = document.getElementById('edit-scenario-description').value;
+                
+                saveData();
+                updateDashboard();
+                renderScenariosList();
+                closeModal('scenario-modal');
+                showNotification('Сценарият е актуализиран!', 'success');
+            }
+        });
+
+        // Charts
+        function initializeCharts() {
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true
+                        }
+                    }
+                }
+            };
+
+            // Hypotheses Status Chart
+            const hypothesesCtx = document.getElementById('hypotheses-chart').getContext('2d');
+            charts.hypotheses = new Chart(hypothesesCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Чернова', 'Активна', 'Тестване', 'Завършена'],
+                    datasets: [{
+                        data: [0, 0, 0, 0],
+                        backgroundColor: [
+                            '#94a3b8',
+                            '#667eea',
+                            '#f59e0b',
+                            '#10b981'
+                        ]
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // Scenarios Types Chart
+            const scenariosCtx = document.getElementById('scenarios-chart').getContext('2d');
+            charts.scenarios = new Chart(scenariosCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Оптимистичен', 'Реалистичен', 'Песимистичен', 'Стрес тест'],
+                    datasets: [{
+                        label: 'Брой сценарии',
+                        data: [0, 0, 0, 0],
+                        backgroundColor: '#667eea'
+                    }]
+                },
+                options: {
+                    ...chartOptions,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Categories Chart
+            const categoriesCtx = document.getElementById('categories-chart').getContext('2d');
+            charts.categories = new Chart(categoriesCtx, {
+                type: 'pie',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: [
+                            '#667eea',
+                            '#f093fb',
+                            '#4facfe',
+                            '#a78bfa',
+                            '#f5576c',
+                            '#00f2fe'
+                        ]
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // Timeline Chart
+            const timelineCtx = document.getElementById('timeline-chart').getContext('2d');
+            charts.timeline = new Chart(timelineCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Създадени хипотези',
+                        data: [],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'Създадени сценарии',
+                        data: [],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    ...chartOptions,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            updateCharts();
+        }
+
+        function updateCharts() {
+            // Update hypotheses status chart
+            const statusCounts = {
+                'Чернова': hypotheses.filter(h => h.status === 'Чернова').length,
+                'Активна': hypotheses.filter(h => h.status === 'Активна').length,
+                'Тестване': hypotheses.filter(h => h.status === 'Тестване').length,
+                'Завършена': hypotheses.filter(h => h.status === 'Завършена').length
+            };
+
+            charts.hypotheses.data.datasets[0].data = [
+                statusCounts['Чернова'],
+                statusCounts['Активна'],
+                statusCounts['Тестване'],
+                statusCounts['Завършена']
+            ];
+            charts.hypotheses.update();
+
+            // Update scenarios types chart
+            const typeCounts = {
+                'Оптимистичен': scenarios.filter(s => s.type === 'Оптимистичен').length,
+                'Реалистичен': scenarios.filter(s => s.type === 'Реалистичен').length,
+                'Песимистичен': scenarios.filter(s => s.type === 'Песимистичен').length,
+                'Стрес тест': scenarios.filter(s => s.type === 'Стрес тест').length
+            };
+
+            charts.scenarios.data.datasets[0].data = [
+                typeCounts['Оптимистичен'],
+                typeCounts['Реалистичен'],
+                typeCounts['Песимистичен'],
+                typeCounts['Стрес тест']
+            ];
+            charts.scenarios.update();
+
+            // Update categories chart
+            const allCategories = [...new Set([
+                ...hypotheses.map(h => h.category),
+                ...scenarios.map(s => s.category)
+            ])];
+            
+            const categoryCounts = allCategories.map(cat => {
+                const hypCount = hypotheses.filter(h => h.category === cat).length;
+                const scenCount = scenarios.filter(s => s.category === cat).length;
+                return hypCount + scenCount;
+            });
+
+            charts.categories.data.labels = allCategories;
+            charts.categories.data.datasets[0].data = categoryCounts;
+            charts.categories.update();
+
+            // Update timeline chart
+            const last7Days = Array.from({length: 7}, (_, i) => {
+                const date = new Date();
+                date.setDate(date.getDate() - (6 - i));
+                return date.toISOString().split('T')[0];
+            });
+
+            const hypothesesData = last7Days.map(date => {
+                return hypotheses.filter(h => h.createdAt.split('T')[0] === date).length;
+            });
+
+            const scenariosData = last7Days.map(date => {
+                return scenarios.filter(s => s.createdAt.split('T')[0] === date).length;
+            });
+
+            charts.timeline.data.labels = last7Days.map(date => {
+                return new Date(date).toLocaleDateString('bg-BG', {month: 'short', day: 'numeric'});
+            });
+            charts.timeline.data.datasets[0].data = hypothesesData;
+            charts.timeline.data.datasets[1].data = scenariosData;
+            charts.timeline.update();
+        }
+
+        // Reports Functions
+        function generatePDFReport() {
+            showNotification('PDF докладът се генерира...', 'info');
+            
+            setTimeout(() => {
+                const reportData = {
+                    hypotheses: hypotheses,
+                    scenarios: scenarios,
+                    generatedAt: new Date().toISOString(),
+                    summary: {
+                        totalHypotheses: hypotheses.length,
+                        totalScenarios: scenarios.length,
+                        activeHypotheses: hypotheses.filter(h => h.status === 'Активна').length,
+                        completedHypotheses: hypotheses.filter(h => h.status === 'Завършена').length
+                    }
+                };
+                
+                const dataStr = JSON.stringify(reportData, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                const url = URL.createObjectURL(dataBlob);
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `bi-report-${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+                
+                URL.revokeObjectURL(url);
+                showNotification('PDF докладът е генериран и изтеглен!', 'success');
+            }, 2000);
+        }
+
+        function generateExcelReport() {
+            showNotification('Excel докладът се генерира...', 'info');
+            
+            setTimeout(() => {
+                // Create CSV content
+                let csvContent = "data:text/csv;charset=utf-8,";
+                
+                // Hypotheses data
+                csvContent += "ХИПОТЕЗИ,,,\n";
+                csvContent += "Заглавие,Категория,Приоритет,Статус,Дата\n";
+                hypotheses.forEach(h => {
+                    csvContent += `"${h.title}","${h.category}","${h.priority}","${h.status}","${new Date(h.createdAt).toLocaleDateString('bg-BG')}"\n`;
+                });
+                
+                csvContent += "\nСЦЕНАРИИ,,,\n";
+                csvContent += "Заглавие,Тип,Категория,Статус,Дата\n";
+                scenarios.forEach(s => {
+                    csvContent += `"${s.title}","${s.type}","${s.category}","${s.status}","${new Date(s.createdAt).toLocaleDateString('bg-BG')}"\n`;
+                });
+                
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement('a');
+                link.setAttribute('href', encodedUri);
+                link.setAttribute('download', `bi-export-${new Date().toISOString().split('T')[0]}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showNotification('Excel докладът е генериран и изтеглен!', 'success');
+            }, 1500);
+        }
+
+        function generateDashboardReport() {
+            showNotification('Dashboard докладът се генерира...', 'info');
+            setTimeout(() => {
+                showNotification('Интерактивният dashboard доклад е готов!', 'success');
+            }, 2000);
+        }
+
+        function importCSV() {
+            showNotification('CSV импорт функцията ще бъде достъпна скоро!', 'info');
+        }
+
+        function exportData() {
+            const allData = {
+                hypotheses,
+                scenarios,
+                exportedAt: new Date().toISOString()
+            };
+            
+            const dataStr = JSON.stringify(allData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `bi-data-export-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            
+            URL.revokeObjectURL(url);
+            showNotification('Данните са експортирани успешно!', 'success');
+        }
+
+        function clearData() {
+            if (confirm('Сигурен ли си, че искаш да изтриеш всички данни? Това действие не може да бъде отменено!')) {
+                if (confirm('Наистина ли искаш да продължиш? Всички хипотези и сценарии ще бъдат изтрити!')) {
+                    hypotheses = [];
+                    scenarios = [];
+                    saveData();
+                    updateDashboard();
+                    renderHypothesesList();
+                    renderScenariosList();
+                    showNotification('Всички данни са изтрити!', 'success');
+                }
+            }
+        }
+
+        // Settings Form
+        document.getElementById('settings-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            showNotification('Настройките са запазени успешно!', 'success');
+        });
+
+        // AI Assistant
+        function showAIAssistant() {
+            showNotification('AI Асистентът анализира вашите данни...', 'info');
+            
+            setTimeout(() => {
+                const analysis = analyzeBusinessData();
+                showNotification(`AI Анализ: ${analysis}`, 'success');
+            }, 3000);
+        }
+
+        function analyzeBusinessData() {
+            const activeHypotheses = hypotheses.filter(h => h.status === 'Активна').length;
+            const completedHypotheses = hypotheses.filter(h => h.status === 'Завършена').length;
+            const activeScenarios = scenarios.filter(s => s.status === 'В процес').length;
+            
+            if (activeHypotheses === 0 && activeScenarios === 0) {
+                return "Препоръчвам да създадете поне една хипотеза за анализ.";
+            }
+            
+            if (completedHypotheses > activeHypotheses) {
+                return "Отличен напредък! Вашите завършени хипотези надвишават активните.";
+            }
+            
+            if (activeScenarios > activeHypotheses) {
+                return "Имате повече сценарии от хипотези. Препоръчвам баланс между двете.";
+            }
+            
+            return "Добрата работа продължава! Продължавайте с текущия темп.";
+        }
 
         // Notification System
         function showNotification(message, type = 'success') {
@@ -1350,9 +2349,9 @@
             notification.className = `notification ${type}`;
             notification.innerHTML = `
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
                     <div>
-                        <strong>${type === 'success' ? 'Успех!' : 'Внимание!'}</strong>
+                        <strong>${type === 'success' ? 'Успех!' : type === 'error' ? 'Грешка!' : 'Информация!'}</strong>
                         <div style="margin-top: 0.25rem; font-size: 0.875rem;">${message}</div>
                     </div>
                 </div>
@@ -1370,43 +2369,23 @@
             }, 4000);
         }
 
-        // AI Assistant Function
-        function showAIAssistant() {
-            showNotification('AI Асистентът ще бъде достъпен скоро! 🤖', 'info');
-        }
-
-        // Search Functionality
-        document.querySelectorAll('.search-input').forEach(input => {
-            input.addEventListener('input', function() {
-                const searchTerm = this.value.toLowerCase();
-                // Add search logic here
-                console.log('Търсене за:', searchTerm);
+        // Click outside modal to close
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('show');
+                }
             });
         });
 
-        // Animation on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            // Animate stats cards
-            const statCards = document.querySelectorAll('.stat-card');
-            statCards.forEach((card, index) => {
-                setTimeout(() => {
-                    card.style.transform = 'translateY(0)';
-                    card.style.opacity = '1';
-                }, index * 100);
-            });
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal.show').forEach(modal => {
+                    modal.classList.remove('show');
+                });
+            }
         });
-
-        // Initial stats animation setup
-        document.querySelectorAll('.stat-card').forEach(card => {
-            card.style.transform = 'translateY(20px)';
-            card.style.opacity = '0';
-            card.style.transition = 'all 0.5s ease';
-        });
-
-        // Welcome message
-        setTimeout(() => {
-            showNotification('Добре дошли в Stoic 11 BI Manager! 🎯', 'success');
-        }, 1000);
     </script>
 </body>
 </html>
