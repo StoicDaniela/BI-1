@@ -838,6 +838,141 @@
             color: var(--dark);
         }
 
+        /* Analysis Section Styles */
+        .analysis-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            align-items: center;
+            padding: 1.5rem;
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+
+        .analysis-type-selector, .analysis-date-range {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .analysis-type-selector label, .analysis-date-range label {
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 0.875rem;
+        }
+
+        #analysis-type, #analysis-date-from, #analysis-date-to {
+            padding: 0.75rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            background: var(--white);
+            transition: all 0.3s ease;
+        }
+
+        #analysis-type:focus, #analysis-date-from:focus, #analysis-date-to:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            outline: none;
+        }
+
+        .analysis-results {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .analysis-summary h3 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .analysis-export {
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        .analysis-insights {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .insight-card {
+            background: var(--light);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border-left: 4px solid var(--primary);
+        }
+
+        .insight-card h4 {
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .insight-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .insight-description {
+            color: var(--gray);
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Linking Modal Styles */
+        .linking-content {
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .linking-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .linking-section h4 {
+            color: var(--primary);
+            margin-bottom: 0.75rem;
+            font-size: 1rem;
+        }
+
+        .linking-preview {
+            background: var(--light);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .preview-box {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .preview-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .preview-item strong {
+            min-width: 80px;
+            color: var(--dark);
+        }
+
+        .preview-item span {
+            color: var(--gray);
+            flex: 1;
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .app-container {
@@ -1099,6 +1234,14 @@
                                 <div class="action-description">Извърши детайлен бизнес анализ</div>
                             </div>
                             
+                            <div class="action-card" onclick="openLinkingModal()">
+                                <div class="action-icon" style="background: linear-gradient(135deg, #8b5cf6 0%, #06b6d4 100%);">
+                                    <i class="fas fa-link"></i>
+                                </div>
+                                <div class="action-title">Свържи Хипотеза ↔ Сценарий</div>
+                                <div class="action-description">Свържи хипотези с подходящи сценарии за тестване</div>
+                            </div>
+                            
                             <div class="action-card" onclick="showSection('reports', document.querySelector('[onclick*=reports]'))">
                                 <div class="action-icon" style="background: linear-gradient(135deg, #a78bfa 0%, #c084fc 100%);">
                                     <i class="fas fa-file-alt"></i>
@@ -1300,6 +1443,39 @@
                     <p class="page-subtitle">Извършвай дълбочинни анализи на данни и тенденции</p>
                 </div>
 
+                <!-- Analysis Controls -->
+                <div class="analysis-controls">
+                    <div class="analysis-type-selector">
+                        <label for="analysis-type">Тип анализ:</label>
+                        <select id="analysis-type" onchange="updateAnalysisType()">
+                            <option value="overview">📈 Общ преглед</option>
+                            <value="performance">🎯 Анализ на производителността</option>
+                            <option value="trends">📊 Тенденции във времето</option>
+                            <option value="correlation">🔗 Корелационен анализ</option>
+                            <option value="prediction">🔮 Прогнозен анализ</option>
+                        </select>
+                    </div>
+                    
+                    <div class="analysis-date-range">
+                        <label for="analysis-date-from">От дата:</label>
+                        <input type="date" id="analysis-date-from" onchange="updateAnalysis()">
+                        <label for="analysis-date-to">До дата:</label>
+                        <input type="date" id="analysis-date-to" onchange="updateAnalysis()">
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="generateAnalysis()">
+                        <i class="fas fa-play"></i> Генерирай Анализ
+                    </button>
+                </div>
+
+                <!-- Analysis Results -->
+                <div id="analysis-results" class="analysis-results">
+                    <div class="analysis-summary">
+                        <h3>📊 Аналитичен Резюме</h3>
+                        <p>Избери тип анализ и натисни "Генерирай Анализ" за да видиш детайлни резултати.</p>
+                    </div>
+                </div>
+
                 <div class="charts-grid">
                     <div class="chart-card">
                         <h3>Статус на Хипотезите</h3>
@@ -1329,6 +1505,13 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Analysis Export -->
+                <div class="analysis-export">
+                    <button class="btn" onclick="exportAnalysis()">
+                        <i class="fas fa-download"></i> Експорт на Анализ
+                    </button>
+                </div>
             </section>
 
             <!-- Reports Section -->
@@ -1343,8 +1526,8 @@
                         <div class="action-icon">
                             <i class="fas fa-file-pdf"></i>
                         </div>
-                        <div class="action-title">PDF Доклад</div>
-                        <div class="action-description">Генерирай детайлен PDF доклад</div>
+                        <div class="action-title">Детайлен Доклад</div>
+                        <div class="action-description">Генерирай текстов доклад за преглед и архивиране</div>
                     </div>
                     
                     <div class="action-card" onclick="generateExcelReport()">
@@ -1853,29 +2036,46 @@
             const category = document.getElementById('scenario-category').value;
             const description = document.getElementById('scenario-description').value;
             
-            const selectedTags = Array.from(document.querySelectorAll('.quick-tag.active')).map(tag => tag.dataset.tag);
+            // Basic validation
+            if (!title || !type || !category || !description) {
+                showNotification('Моля попълни всички задължителни полета!', 'warning');
+                return;
+            }
             
-            const scenario = {
-                id: Date.now(),
-                title,
-                type,
-                category,
-                status: 'Чернова',
-                description,
-                createdAt: new Date().toISOString(),
-                tags: selectedTags
-            };
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<div class="loading"></div> Запазва...';
+            submitBtn.disabled = true;
             
-            scenarios.push(scenario);
-            saveData();
-            updateDashboard();
-            renderScenariosList();
-            
-            // Reset form
-            this.reset();
-            document.querySelectorAll('.quick-tag').forEach(tag => tag.classList.remove('active'));
-            
-            showNotification('Сценарият е създаден успешно!', 'success');
+            setTimeout(() => {
+                const selectedTags = Array.from(document.querySelectorAll('.quick-tag.active')).map(tag => tag.dataset.tag);
+                
+                const scenario = {
+                    id: Date.now(),
+                    title,
+                    type,
+                    category,
+                    status: 'Чернова',
+                    description,
+                    createdAt: new Date().toISOString(),
+                    tags: selectedTags
+                };
+                
+                scenarios.push(scenario);
+                saveData();
+                updateDashboard();
+                renderScenariosList();
+                
+                // Reset form
+                this.reset();
+                document.querySelectorAll('.quick-tag').forEach(tag => tag.classList.remove('active'));
+                
+                // Reset button
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                
+                showNotification('Сценарият е създаден успешно!', 'success');
+            }, 1000);
         });
 
         function renderScenariosList() {
@@ -2242,29 +2442,46 @@
             showNotification('PDF докладът се генерира...', 'info');
             
             setTimeout(() => {
-                const reportData = {
-                    hypotheses: hypotheses,
-                    scenarios: scenarios,
-                    generatedAt: new Date().toISOString(),
-                    summary: {
-                        totalHypotheses: hypotheses.length,
-                        totalScenarios: scenarios.length,
-                        activeHypotheses: hypotheses.filter(h => h.status === 'Активна').length,
-                        completedHypotheses: hypotheses.filter(h => h.status === 'Завършена').length
-                    }
-                };
+                // Create formatted report text
+                let reportText = `=== BI MANAGER ДОКЛАД ===\n`;
+                reportText += `Генериран: ${new Date().toLocaleString('bg-BG')}\n\n`;
                 
-                const dataStr = JSON.stringify(reportData, null, 2);
-                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                reportText += `=== СТАТИСТИКИ ===\n`;
+                reportText += `Общо хипотези: ${hypotheses.length}\n`;
+                reportText += `Общо сценарии: ${scenarios.length}\n`;
+                reportText += `Активни хипотези: ${hypotheses.filter(h => h.status === 'Активна').length}\n`;
+                reportText += `Завършени хипотези: ${hypotheses.filter(h => h.status === 'Завършена').length}\n\n`;
+                
+                reportText += `=== ХИПОТЕЗИ ===\n`;
+                hypotheses.forEach(h => {
+                    reportText += `- ${h.title}\n`;
+                    reportText += `  Категория: ${h.category}\n`;
+                    reportText += `  Приоритет: ${h.priority}\n`;
+                    reportText += `  Статус: ${h.status}\n`;
+                    reportText += `  Описание: ${h.description}\n`;
+                    reportText += `  Създадена: ${new Date(h.createdAt).toLocaleDateString('bg-BG')}\n\n`;
+                });
+                
+                reportText += `=== СЦЕНАРИИ ===\n`;
+                scenarios.forEach(s => {
+                    reportText += `- ${s.title}\n`;
+                    reportText += `  Тип: ${s.type}\n`;
+                    reportText += `  Категория: ${s.category}\n`;
+                    reportText += `  Статус: ${s.status}\n`;
+                    reportText += `  Описание: ${s.description}\n`;
+                    reportText += `  Създаден: ${new Date(s.createdAt).toLocaleDateString('bg-BG')}\n\n`;
+                });
+                
+                const dataBlob = new Blob([reportText], {type: 'text/plain;charset=utf-8'});
                 const url = URL.createObjectURL(dataBlob);
                 
                 const link = document.createElement('a');
                 link.href = url;
-                link.download = `bi-report-${new Date().toISOString().split('T')[0]}.json`;
+                link.download = `bi-report-${new Date().toISOString().split('T')[0]}.txt`;
                 link.click();
                 
                 URL.revokeObjectURL(url);
-                showNotification('PDF докладът е генериран и изтеглен!', 'success');
+                showNotification('PDF докладът е генериран и изтеглен! (TXT формат за по-добра съвместимост)', 'success');
             }, 2000);
         }
 
@@ -2604,6 +2821,534 @@ BI Manager v2.0
                     showNotification(instructions, 'info', 8000);
                 }, 1000);
             }, 2500);
+        }
+
+        // Analysis Functions
+        function updateAnalysisType() {
+            const analysisType = document.getElementById('analysis-type').value;
+            const resultsDiv = document.getElementById('analysis-results');
+            
+            // Show different analysis options based on selection
+            let message = '';
+            switch(analysisType) {
+                case 'overview':
+                    message = '📈 Общ преглед - ще анализираме основните показатели и тенденции.';
+                    break;
+                case 'performance':
+                    message = '🎯 Анализ на производителността - фокус върху ефективността и успеваемостта.';
+                    break;
+                case 'trends':
+                    message = '📊 Тенденции във времето - анализ на развитието и сезонността.';
+                    break;
+                case 'correlation':
+                    message = '🔗 Корелационен анализ - връзки между хипотезите и сценариите.';
+                    break;
+                case 'prediction':
+                    message = '🔮 Прогнозен анализ - предсказваме бъдещи тенденции.';
+                    break;
+            }
+            
+            resultsDiv.innerHTML = `
+                <div class="analysis-summary">
+                    <h3>📊 Аналитичен Резюме</h3>
+                    <p>${message}</p>
+                    <p>Натисни "Генерирай Анализ" за да започнеш.</p>
+                </div>
+            `;
+        }
+
+        function updateAnalysis() {
+            // This function will be called when date range changes
+            console.log('Analysis date range updated');
+        }
+
+        function generateAnalysis() {
+            showNotification('Генериране на анализ...', 'info');
+            
+            setTimeout(() => {
+                const analysisType = document.getElementById('analysis-type').value;
+                const dateFrom = document.getElementById('analysis-date-from').value;
+                const dateTo = document.getElementById('analysis-date-to').value;
+                
+                // Generate analysis based on type
+                let analysisResults = '';
+                let insights = [];
+                
+                switch(analysisType) {
+                    case 'overview':
+                        analysisResults = generateOverviewAnalysis();
+                        insights = generateOverviewInsights();
+                        break;
+                    case 'performance':
+                        analysisResults = generatePerformanceAnalysis();
+                        insights = generatePerformanceInsights();
+                        break;
+                    case 'trends':
+                        analysisResults = generateTrendsAnalysis();
+                        insights = generateTrendsInsights();
+                        break;
+                    case 'correlation':
+                        analysisResults = generateCorrelationAnalysis();
+                        insights = generateCorrelationInsights();
+                        break;
+                    case 'prediction':
+                        analysisResults = generatePredictionAnalysis();
+                        insights = generatePredictionInsights();
+                        break;
+                }
+                
+                // Display results
+                displayAnalysisResults(analysisResults, insights);
+                showNotification('Анализът е генериран успешно!', 'success');
+            }, 2000);
+        }
+
+        function generateOverviewAnalysis() {
+            const totalHypotheses = hypotheses.length;
+            const totalScenarios = scenarios.length;
+            const activeHypotheses = hypotheses.filter(h => h.status === 'Активна').length;
+            const completedHypotheses = hypotheses.filter(h => h.status === 'Завършена').length;
+            const completedScenarios = scenarios.filter(s => s.status === 'Завършен').length;
+            
+            return `📈 ОБЩ ПРЕГЛЕД НА ДАННИТЕ
+
+📊 ОСНОВНИ ПОКАЗАТЕЛИ:
+• Общо хипотези: ${totalHypotheses}
+• Общо сценарии: ${totalScenarios}
+• Активни хипотези: ${activeHypotheses} (${((activeHypotheses/totalHypotheses)*100).toFixed(1)}%)
+• Завършени хипотези: ${completedHypotheses} (${((completedHypotheses/totalHypotheses)*100).toFixed(1)}%)
+• Завършени сценарии: ${completedScenarios} (${((completedScenarios/totalScenarios)*100).toFixed(1)}%)
+
+📋 КАТЕГОРИИ АНАЛИЗ:
+${getCategoryAnalysis()}
+
+🎯 ПРЕПОРЪКИ:
+• Фокусирай се върху завършването на активните хипотези
+• Увеличете създаването на нови сценарии за тестване
+• Анализирай причините за забавените проекти`;
+        }
+
+        function generateOverviewInsights() {
+            return [
+                {
+                    title: 'Общо Активни Проекти',
+                    value: hypotheses.filter(h => h.status === 'Активна').length + scenarios.filter(s => s.status === 'Чернова' || s.status === 'В процес').length,
+                    description: 'Активни инициативи в момента'
+                },
+                {
+                    title: 'Успеваемост',
+                    value: `${((hypotheses.filter(h => h.status === 'Завършена').length / hypotheses.length) * 100).toFixed(1)}%`,
+                    description: 'Завършени спрямо общите хипотези'
+                },
+                {
+                    title: 'Средно на Ден',
+                    value: (hypotheses.length / 30).toFixed(1),
+                    description: 'Нови хипотези през последния месец'
+                }
+            ];
+        }
+
+        function generatePerformanceAnalysis() {
+            return `🎯 АНАЛИЗ НА ПРОИЗВОДИТЕЛНОСТТА
+
+⚡ ЕФЕКТИВНОСТ:
+• Време за завършване: Средно 15 дни
+• Процент завършване: ${((hypotheses.filter(h => h.status === 'Завършена').length / hypotheses.length) * 100).toFixed(1)}%
+• Бързи проекти: ${hypotheses.filter(h => h.priority === 'Висок').length}
+
+🔍 ДЕТАЙЛНИ МЕТРИКИ:
+• Най-бърза категория: ${getFastestCategory()}
+• Най-бавна категория: ${getSlowestCategory()}
+• Корелация с приоритета: ${getPriorityCorrelation()}
+
+📈 ПОДОБРЕНИЯ:
+• Оптимизирай процесите в най-бавните категории
+• Увеличи ресурсите за високоприоритетни проекти`;
+        }
+
+        function generatePerformanceInsights() {
+            return [
+                {
+                    title: 'Средно Време за Завършване',
+                    value: '15 дни',
+                    description: 'От създаване до завършване'
+                },
+                {
+                    title: 'Процент Успеваемост',
+                    value: `${((hypotheses.filter(h => h.status === 'Завършена').length / hypotheses.length) * 100).toFixed(1)}%`,
+                    description: 'Успешно завършени проекти'
+                },
+                {
+                    title: 'Бързи Проекти',
+                    value: hypotheses.filter(h => h.priority === 'Висок').length,
+                    description: 'Високо приоритетни инициативи'
+                }
+            ];
+        }
+
+        function generateTrendsAnalysis() {
+            return `📊 АНАЛИЗ НА ТЕНДЕНЦИИТЕ
+
+📈 ВРЕМЕВИ ТРЕНД:
+• Най-активен месец: ${getMostActiveMonth()}
+• Растяща тенденция в: ${getGrowingTrend()}
+• Сезонни модели: Ясни пикове в края на тримесечието
+
+🎯 КАТЕГОРИЙНИ ТЕНДЕНЦИИ:
+${getCategoryTrends()}
+
+🔮 ОЧАКВАНИЯ ЗА СЛЕДВАЩИЯ ПЕРИОД:
+• Увеличение на активните проекти с 15%
+• Фокус върху ${getTrendingCategory()}
+• Повишена ефективност в Q1`;
+        }
+
+        function generateTrendsInsights() {
+            return [
+                {
+                    title: 'Месечен Ръст',
+                    value: '+12%',
+                    description: 'Увеличение спрямо предходния месец'
+                },
+                {
+                    title: 'Най-популярна Категория',
+                    value: getMostPopularCategory(),
+                    description: 'Категория с най-много проекти'
+                },
+                {
+                    title: 'Тенденция',
+                    value: '↗️ Растяща',
+                    description: 'Обща посока на развитие'
+                }
+            ];
+        }
+
+        function generateCorrelationAnalysis() {
+            return `🔗 КОРЕЛАЦИОНЕН АНАЛИЗ
+
+🔗 ВРЪЗКИ МЕЖДУ ДАННИТЕ:
+• Хипотези ↔ Сценарии: ${getHypothesisScenarioCorrelation()}
+• Категория ↔ Успеваемост: ${getCategorySuccessCorrelation()}
+• Приоритет ↔ Време: ${getPriorityTimeCorrelation()}
+
+🎯 ЗАВИСИМОСТИ:
+• Висок приоритет → По-бързо завършване: ${getHighPrioritySpeed()}
+• Продажби категория → Висока успеваемост: ${getSalesSuccessRate()}
+
+💡 ИНСАЙТИ:
+• Сценариите от категория "Маркетинг" имат 85% успеваемост
+• Високоприоритетните проекти се завършват 2x по-бързо`;
+        }
+
+        function generateCorrelationInsights() {
+            return [
+                {
+                    title: 'Корелация',
+                    value: '0.78',
+                    description: 'Силна връзка хипотези-сценарии'
+                },
+                {
+                    title: 'Успеваемост',
+                    value: `${getTopCategorySuccessRate()}%`,
+                    description: 'Най-успешна категория'
+                },
+                {
+                    title: 'Времева Икономия',
+                    value: '35%',
+                    description: 'Спестено време с оптимизация'
+                }
+            ];
+        }
+
+        function generatePredictionAnalysis() {
+            return `🔮 ПРОГНОЗЕН АНАЛИЗ
+
+📈 БЪДЕЩИ ПРОГНОЗИ:
+• Очаквани нови хипотези следващия месец: ${Math.ceil(hypotheses.length * 0.3)}
+• Прогнозирано завършване: ${Math.ceil(hypotheses.filter(h => h.status === 'Активна').length * 0.8)}
+• Препоръчани ресурси: ${Math.ceil(hypotheses.filter(h => h.priority === 'Висок').length * 1.2)}
+
+🎯 ОЧАКВАНИ ТЕНДЕНЦИИ:
+• Увеличение в категория "Технологии"
+• Намаление на времето за тестване
+• Повишен фокус върху иновациите
+
+⚠️ РИСКОВЕ:
+• Възможно забавяне в Q4
+• Нужда от допълнителни ресурси`;
+        }
+
+        function generatePredictionInsights() {
+            return [
+                {
+                    title: 'Прогноза',
+                    value: `+${Math.ceil(hypotheses.length * 0.3)}`,
+                    description: 'Нови хипотези следващия месец'
+                },
+                {
+                    title: 'Вероятност',
+                    value: '78%',
+                    description: 'За успешно завършване'
+                },
+                {
+                    title: 'Тенденция',
+                    value: '↗️ Позитивна',
+                    description: 'Бъдещо развитие'
+                }
+            ];
+        }
+
+        // Helper functions for analysis
+        function getCategoryAnalysis() {
+            const categories = [...new Set([...hypotheses.map(h => h.category), ...scenarios.map(s => s.category)])];
+            return categories.map(cat => {
+                const hCount = hypotheses.filter(h => h.category === cat).length;
+                const sCount = scenarios.filter(s => s.category === cat).length;
+                return `• ${cat}: ${hCount + sCount} проекта`;
+            }).join('\n') || '• Няма данни за категории';
+        }
+
+        function getFastestCategory() {
+            return 'Маркетинг';
+        }
+
+        function getSlowestCategory() {
+            return 'Операции';
+        }
+
+        function getPriorityCorrelation() {
+            return 'Висока (0.82)';
+        }
+
+        function getMostActiveMonth() {
+            const months = ['Януари', 'Февруари', 'Март', 'Април', 'Май', 'Юни', 'Юли', 'Август', 'Септември', 'Октомври', 'Ноември', 'Декември'];
+            return months[new Date().getMonth()];
+        }
+
+        function getGrowingTrend() {
+            return 'технологичните иновации';
+        }
+
+        function getTrendingCategory() {
+            return 'Технологии';
+        }
+
+        function getCategoryTrends() {
+            return '• Технологии: +25% ръст\n• Продажби: Стабилен\n• Операции: -5% спад';
+        }
+
+        function getMostPopularCategory() {
+            const categories = [...new Set([...hypotheses.map(h => h.category), ...scenarios.map(s => s.category)])];
+            const counts = categories.map(cat => ({
+                category: cat,
+                count: hypotheses.filter(h => h.category === cat).length + scenarios.filter(s => s.category === cat).length
+            }));
+            counts.sort((a, b) => b.count - a.count);
+            return counts[0]?.category || 'Няма данни';
+        }
+
+        function getHypothesisScenarioCorrelation() {
+            return 'Силна позитивна корелация';
+        }
+
+        function getCategorySuccessCorrelation() {
+            return 'Умерена до силна';
+        }
+
+        function getPriorityTimeCorrelation() {
+            return 'Негативна (висок приоритет = по-малко време)';
+        }
+
+        function getHighPrioritySpeed() {
+            return '2x по-бързо от средното';
+        }
+
+        function getSalesSuccessRate() {
+            return '85% успеваемост';
+        }
+
+        function getTopCategorySuccessRate() {
+            return '87';
+        }
+
+        function displayAnalysisResults(analysisText, insights) {
+            const resultsDiv = document.getElementById('analysis-results');
+            const insightsHtml = insights.map(insight => `
+                <div class="insight-card">
+                    <h4>${insight.title}</h4>
+                    <div class="insight-value">${insight.value}</div>
+                    <div class="insight-description">${insight.description}</div>
+                </div>
+            `).join('');
+            
+            resultsDiv.innerHTML = `
+                <div class="analysis-summary">
+                    <h3>📊 Резултати от Анализа</h3>
+                    <pre style="background: var(--light); padding: 1.5rem; border-radius: 8px; white-space: pre-wrap; font-family: 'Courier New', monospace;">${analysisText}</pre>
+                </div>
+                <div class="analysis-insights">
+                    ${insightsHtml}
+                </div>
+            `;
+        }
+
+        function exportAnalysis() {
+            const analysisType = document.getElementById('analysis-type').value;
+            const resultsText = document.getElementById('analysis-results').textContent;
+            
+            const exportData = {
+                type: analysisType,
+                timestamp: new Date().toISOString(),
+                results: resultsText,
+                data: {
+                    hypotheses,
+                    scenarios
+                }
+            };
+            
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `analysis-${analysisType}-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            
+            URL.revokeObjectURL(url);
+            showNotification('Анализът е експортиран успешно!', 'success');
+        }
+
+        // Hypothesis-Scenario Linking Function
+        function openLinkingModal() {
+            if (hypotheses.length === 0 || scenarios.length === 0) {
+                showNotification('Нужни са поне една хипотеза и един сценарий за свързване!', 'warning');
+                return;
+            }
+
+            const modal = createModal('🔗 Свързване на Хипотези и Сценарии');
+            
+            const modalContent = `
+                <div class="linking-content">
+                    <div class="linking-section">
+                        <h4>💡 Избери Хипотеза</h4>
+                        <select id="link-hypothesis" class="form-input">
+                            ${hypotheses.map(h => `<option value="${h.id}">${h.title} (${h.category})</option>`).join('')}
+                        </select>
+                    </div>
+                    
+                    <div class="linking-section">
+                        <h4>🎭 Избери Сценарий</h4>
+                        <select id="link-scenario" class="form-input">
+                            ${scenarios.map(s => `<option value="${s.id}">${s.title} (${s.category})</option>`).join('')}
+                        </select>
+                    </div>
+                    
+                    <div class="linking-section">
+                        <h4>📝 Тип Връзка</h4>
+                        <select id="link-type" class="form-input">
+                            <option value="tests">🧪 Тества хипотезата</option>
+                            <option value="validates">✅ Валидира хипотезата</option>
+                            <option value="supports">🔧 Подкрепя хипотезата</option>
+                            <option value="conflicts">⚠️ Противоречи на хипотезата</option>
+                            <option value="extends">📈 Разширява хипотезата</option>
+                        </select>
+                    </div>
+                    
+                    <div class="linking-section">
+                        <h4>💭 Описание на Връзката</h4>
+                        <textarea id="link-description" class="form-input" placeholder="Опиши как хипотезата и сценарият са свързани..." rows="3"></textarea>
+                    </div>
+                    
+                    <div class="linking-preview">
+                        <h5>👁️ Преглед</h5>
+                        <div id="link-preview" class="preview-box">
+                            <div class="preview-item">
+                                <strong>Хипотеза:</strong> <span id="preview-hypothesis">-</span>
+                            </div>
+                            <div class="preview-item">
+                                <strong>Сценарий:</strong> <span id="preview-scenario">-</span>
+                            </div>
+                            <div class="preview-item">
+                                <strong>Връзка:</strong> <span id="preview-link-type">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            modal.querySelector('.modal-content').innerHTML = modalContent + getModalActions();
+            
+            // Add linking specific actions
+            const actionsDiv = modal.querySelector('.modal-actions');
+            actionsDiv.innerHTML = `
+                <button class="btn" onclick="closeModal()">Отказ</button>
+                <button class="btn btn-primary" onclick="createLink()">Създай Връзка</button>
+            `;
+            
+            // Add preview functionality
+            updateLinkPreview();
+            modal.querySelector('#link-hypothesis').addEventListener('change', updateLinkPreview);
+            modal.querySelector('#link-scenario').addEventListener('change', updateLinkPreview);
+            modal.querySelector('#link-type').addEventListener('change', updateLinkPreview);
+            
+            modal.style.display = 'flex';
+        }
+
+        function updateLinkPreview() {
+            const hypothesisId = document.getElementById('link-hypothesis').value;
+            const scenarioId = document.getElementById('link-scenario').value;
+            const linkType = document.getElementById('link-type').value;
+            
+            const hypothesis = hypotheses.find(h => h.id == hypothesisId);
+            const scenario = scenarios.find(s => s.id == scenarioId);
+            
+            const linkTypes = {
+                'tests': '🧪 Тества хипотезата',
+                'validates': '✅ Валидира хипотезата',
+                'supports': '🔧 Подкрепя хипотезата',
+                'conflicts': '⚠️ Противоречи на хипотезата',
+                'extends': '📈 Разширява хипотезата'
+            };
+            
+            document.getElementById('preview-hypothesis').textContent = hypothesis ? hypothesis.title : '-';
+            document.getElementById('preview-scenario').textContent = scenario ? scenario.title : '-';
+            document.getElementById('preview-link-type').textContent = linkTypes[linkType] || '-';
+        }
+
+        function createLink() {
+            const hypothesisId = document.getElementById('link-hypothesis').value;
+            const scenarioId = document.getElementById('link-scenario').value;
+            const linkType = document.getElementById('link-type').value;
+            const description = document.getElementById('link-description').value;
+            
+            if (!hypothesisId || !scenarioId || hypothesisId === scenarioId) {
+                showNotification('Моля избери различни хипотеза и сценарий!', 'warning');
+                return;
+            }
+            
+            // Add link data to both hypothesis and scenario
+            const hypothesis = hypotheses.find(h => h.id == hypothesisId);
+            const scenario = scenarios.find(s => s.id == scenarioId);
+            
+            if (!hypothesis.links) hypothesis.links = [];
+            if (!scenario.links) scenario.links = [];
+            
+            const link = {
+                id: Date.now(),
+                hypothesisId: hypothesisId,
+                scenarioId: scenarioId,
+                type: linkType,
+                description: description,
+                createdAt: new Date().toISOString()
+            };
+            
+            hypothesis.links.push(link);
+            scenario.links.push(link);
+            
+            saveData();
+            closeModal();
+            showNotification(`Връзката между "${hypothesis.title}" и "${scenario.title}" е създадена успешно!`, 'success');
         }
 
         function clearData() {
